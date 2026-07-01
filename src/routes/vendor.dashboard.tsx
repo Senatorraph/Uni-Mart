@@ -28,7 +28,10 @@ function VendorDashboard() {
 
   useEffect(() => {
     if (loading) return;
-    if (!session) return navigate({ to: "/auth", replace: true });
+    if (!session) {
+      navigate({ to: "/auth", replace: true });
+      return;
+    }
     if (profile && profile.role !== "vendor" && profile.role !== "super_admin") {
       navigate({ to: "/", replace: true });
     }
