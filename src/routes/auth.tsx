@@ -59,8 +59,13 @@ function AuthPage() {
   }, []);
 
   useEffect(() => {
-    if (!loading && session && profile) {
+    if (loading || !session) return;
+    // Wait briefly for profile to load; if none exists, default to student home.
+    if (profile !== null) {
       navigate({ to: roleHome(profile.role), replace: true });
+    } else {
+      const t = setTimeout(() => navigate({ to: "/", replace: true }), 400);
+      return () => clearTimeout(t);
     }
   }, [loading, session, profile, navigate]);
 
