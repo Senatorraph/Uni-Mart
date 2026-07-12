@@ -4,7 +4,7 @@ import { toast } from "sonner";
 import { z } from "zod";
 
 import { supabase } from "@/integrations/supabase/client";
-import { useAuth, roleHome } from "@/lib/auth-context";
+import { useAuth, roleHome, type Profile } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -59,8 +59,13 @@ function AuthPage() {
   }, []);
 
   useEffect(() => {
-    if (!loading && session && profile) {
+    if (loading || !session) return;
+    // Wait briefly for profile to load; if none exists, default to student home.
+    if (profile !== null) {
       navigate({ to: roleHome(profile.role), replace: true });
+    } else {
+      const t = setTimeout(() => navigate({ to: "/", replace: true }), 400);
+      return () => clearTimeout(t);
     }
   }, [loading, session, profile, navigate]);
 
@@ -103,6 +108,7 @@ function AuthPage() {
 }
 
 function SignInForm() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [submitting, setSubmitting] = useState(false);
@@ -110,13 +116,25 @@ function SignInForm() {
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSubmitting(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    setSubmitting(false);
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
+      setSubmitting(false);
       toast.error(error.message);
       return;
     }
+    const userId = data.session?.user.id;
+    let role: Profile["role"] = "student";
+    if (userId) {
+      const { data: profile } = await (supabase as any)
+        .from("profiles")
+        .select("role, university_id, full_name")
+        .eq("id", userId)
+        .maybeSingle();
+      if (profile?.role) role = profile.role;
+    }
+    setSubmitting(false);
     toast.success("Welcome back!");
+    navigate({ to: roleHome(role), replace: true });
   };
 
   return (
