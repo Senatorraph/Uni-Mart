@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { GraduationCap, Store } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, roleHome, type Profile } from "@/lib/auth-context";
@@ -30,6 +31,17 @@ export const Route = createFileRoute("/auth")({
 });
 
 type University = { id: string; name: string };
+type SignupRole = "student" | "vendor";
+
+const VENDOR_CATEGORIES = [
+  "Food & Drinks",
+  "Electronics",
+  "Clothing & Fashion",
+  "Books & Stationery",
+  "Beauty & Personal Care",
+  "Services & Repairs",
+  "Other",
+] as const;
 
 const signUpSchema = z.object({
   full_name: z.string().trim().min(2, "Enter your full name").max(80),
@@ -37,6 +49,11 @@ const signUpSchema = z.object({
   phone: z.string().trim().min(7, "Enter a valid phone number").max(20),
   password: z.string().min(6, "Password must be at least 6 characters").max(72),
   university_id: z.string().uuid("Select your university"),
+});
+
+const vendorExtraSchema = z.object({
+  business_name: z.string().trim().min(2, "Enter your business name").max(100),
+  category: z.string().min(1, "Select a business category"),
 });
 
 function AuthPage() {
