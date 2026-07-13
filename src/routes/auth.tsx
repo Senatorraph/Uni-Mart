@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { z } from "zod";
+import { GraduationCap, Store } from "lucide-react";
 
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth, roleHome, type Profile } from "@/lib/auth-context";
@@ -30,6 +31,17 @@ export const Route = createFileRoute("/auth")({
 });
 
 type University = { id: string; name: string };
+type SignupRole = "student" | "vendor";
+
+const VENDOR_CATEGORIES = [
+  "Food & Drinks",
+  "Electronics",
+  "Clothing & Fashion",
+  "Books & Stationery",
+  "Beauty & Personal Care",
+  "Services & Repairs",
+  "Other",
+] as const;
 
 const signUpSchema = z.object({
   full_name: z.string().trim().min(2, "Enter your full name").max(80),
@@ -37,6 +49,11 @@ const signUpSchema = z.object({
   phone: z.string().trim().min(7, "Enter a valid phone number").max(20),
   password: z.string().min(6, "Password must be at least 6 characters").max(72),
   university_id: z.string().uuid("Select your university"),
+});
+
+const vendorExtraSchema = z.object({
+  business_name: z.string().trim().min(2, "Enter your business name").max(100),
+  category: z.string().min(1, "Select a business category"),
 });
 
 function AuthPage() {
@@ -169,12 +186,15 @@ function SignInForm() {
 }
 
 function SignUpForm({ universities }: { universities: University[] }) {
+  const [role, setRole] = useState<SignupRole | null>(null);
   const [values, setValues] = useState({
     full_name: "",
     email: "",
     phone: "",
     password: "",
     university_id: "",
+    business_name: "",
+    category: "",
   });
   const [submitting, setSubmitting] = useState(false);
 
@@ -183,10 +203,21 @@ function SignUpForm({ universities }: { universities: University[] }) {
 
   const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!role) {
+      toast.error("Please select who you are");
+      return;
+    }
     const parsed = signUpSchema.safeParse(values);
     if (!parsed.success) {
       toast.error(parsed.error.issues[0].message);
       return;
+    }
+    if (role === "vendor") {
+      const v = vendorExtraSchema.safeParse(values);
+      if (!v.success) {
+        toast.error(v.error.issues[0].message);
+        return;
+      }
     }
     setSubmitting(true);
     const { data, error } = await supabase.auth.signUp({
@@ -198,6 +229,7 @@ function SignUpForm({ universities }: { universities: University[] }) {
           full_name: values.full_name,
           phone: values.phone,
           university_id: values.university_id,
+          role,
         },
       },
     });
@@ -214,55 +246,159 @@ function SignUpForm({ universities }: { universities: University[] }) {
           full_name: values.full_name,
           phone: values.phone,
           university_id: values.university_id,
-          role: "student",
+          role,
         },
         { onConflict: "id" },
       );
       if (pErr) console.error(pErr);
+
+      if (role === "vendor") {
+        const { error: vErr } = await (supabase as any).from("vendors").insert({
+          user_id: userId,
+          university_id: values.university_id,
+          business_name: values.business_name,
+          category: values.category,
+          status: "pending",
+        });
+        if (vErr) console.error(vErr);
+      }
     }
     setSubmitting(false);
-    toast.success("Account created — check your email if confirmation is required.");
+    if (role === "vendor") {
+      toast.success("Application submitted! You will be notified once your store is approved.");
+    } else {
+      toast.success("Welcome to UniMarket! You can now sign in.");
+    }
   };
 
   return (
     <form onSubmit={onSubmit} className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor="su-name">Full Name</Label>
-        <Input id="su-name" required value={values.full_name} onChange={set("full_name")} placeholder="Chioma Okafor" />
+      <div className="grid grid-cols-2 gap-3">
+        <RoleCard
+          selected={role === "student"}
+          onClick={() => setRole("student")}
+          icon={<GraduationCap className="h-6 w-6" />}
+          title="I'm a Student"
+          subtitle="Browse and order from campus vendors"
+        />
+        <RoleCard
+          selected={role === "vendor"}
+          onClick={() => setRole("vendor")}
+          icon={<Store className="h-6 w-6" />}
+          title="I'm a Vendor"
+          subtitle="Sell your products to students on campus"
+        />
       </div>
-      <div className="space-y-2">
-        <Label htmlFor="su-email">Email</Label>
-        <Input id="su-email" type="email" required value={values.email} onChange={set("email")} placeholder="you@school.edu.ng" />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="su-phone">Phone Number</Label>
-        <Input id="su-phone" type="tel" required value={values.phone} onChange={set("phone")} placeholder="+234 800 000 0000" />
-      </div>
-      <div className="space-y-2">
-        <Label htmlFor="su-password">Password</Label>
-        <Input id="su-password" type="password" required value={values.password} onChange={set("password")} placeholder="At least 6 characters" />
-      </div>
-      <div className="space-y-2">
-        <Label>University</Label>
-        <Select
-          value={values.university_id}
-          onValueChange={(v) => setValues((s) => ({ ...s, university_id: v }))}
-        >
-          <SelectTrigger>
-            <SelectValue placeholder="Select your university" />
-          </SelectTrigger>
-          <SelectContent>
-            {universities.map((u) => (
-              <SelectItem key={u.id} value={u.id}>
-                {u.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <Button type="submit" className="w-full" disabled={submitting}>
-        {submitting ? "Creating account..." : "Create Account"}
-      </Button>
+
+      {role && (
+        <>
+          <div className="space-y-2">
+            <Label htmlFor="su-name">Full Name</Label>
+            <Input id="su-name" required value={values.full_name} onChange={set("full_name")} placeholder="Chioma Okafor" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="su-email">Email</Label>
+            <Input id="su-email" type="email" required value={values.email} onChange={set("email")} placeholder="you@school.edu.ng" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="su-phone">Phone Number</Label>
+            <Input id="su-phone" type="tel" required value={values.phone} onChange={set("phone")} placeholder="+234 800 000 0000" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="su-password">Password</Label>
+            <Input id="su-password" type="password" required value={values.password} onChange={set("password")} placeholder="At least 6 characters" />
+          </div>
+          <div className="space-y-2">
+            <Label>University</Label>
+            <Select
+              value={values.university_id}
+              onValueChange={(v) => setValues((s) => ({ ...s, university_id: v }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select your university" />
+              </SelectTrigger>
+              <SelectContent>
+                {universities.map((u) => (
+                  <SelectItem key={u.id} value={u.id}>
+                    {u.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {role === "vendor" && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="su-business">Business Name</Label>
+                <Input
+                  id="su-business"
+                  required
+                  value={values.business_name}
+                  onChange={set("business_name")}
+                  placeholder="Chioma's Kitchen"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Business Category</Label>
+                <Select
+                  value={values.category}
+                  onValueChange={(v) => setValues((s) => ({ ...s, category: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {VENDOR_CATEGORIES.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </>
+          )}
+
+          <Button type="submit" className="w-full" disabled={submitting}>
+            {submitting
+              ? "Submitting..."
+              : role === "vendor"
+                ? "Submit Vendor Application"
+                : "Create Account"}
+          </Button>
+        </>
+      )}
     </form>
+  );
+}
+
+function RoleCard({
+  selected,
+  onClick,
+  icon,
+  title,
+  subtitle,
+}: {
+  selected: boolean;
+  onClick: () => void;
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`flex flex-col items-start gap-2 rounded-xl border-2 p-4 text-left transition ${
+        selected
+          ? "border-[#6C3FC5] bg-[#6C3FC5]/10"
+          : "border-border bg-card hover:border-muted-foreground/40"
+      }`}
+    >
+      <div className={selected ? "text-[#6C3FC5]" : "text-muted-foreground"}>{icon}</div>
+      <div className="text-sm font-semibold">{title}</div>
+      <div className="text-xs text-muted-foreground">{subtitle}</div>
+    </button>
   );
 }
