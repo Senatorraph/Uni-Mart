@@ -35,7 +35,7 @@ function Home() {
   useEffect(() => {
     if (loading) return;
     if (!session) {
-      navigate({ to: "/auth", replace: true });
+      navigate({ to: "/auth", search: { next: "" }, replace: true });
       return;
     }
     if (profile && profile.role && profile.role !== "student") {

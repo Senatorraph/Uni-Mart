@@ -29,7 +29,7 @@ function ProductDetail() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && !session) navigate({ to: "/auth", replace: true });
+    if (!loading && !session) navigate({ to: "/auth", search: { next: "" }, replace: true });
   }, [loading, session, navigate]);
 
   useEffect(() => {

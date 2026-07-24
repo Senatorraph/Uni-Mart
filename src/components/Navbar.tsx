@@ -103,7 +103,7 @@ export function Navbar() {
             <DropdownMenuItem
               onClick={async () => {
                 await signOut();
-                navigate({ to: "/auth" });
+                navigate({ to: "/auth", search: { next: "" } });
               }}
             >
               <LogOut className="mr-2 h-4 w-4" /> Sign Out
