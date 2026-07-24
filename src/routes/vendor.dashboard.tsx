@@ -29,7 +29,7 @@ function VendorDashboard() {
   useEffect(() => {
     if (loading) return;
     if (!session) {
-      navigate({ to: "/auth", replace: true });
+      navigate({ to: "/auth", search: { next: "" }, replace: true });
       return;
     }
     if (profile && profile.role !== "vendor" && profile.role !== "super_admin") {

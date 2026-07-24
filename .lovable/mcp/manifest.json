@@ -1,0 +1,157 @@
+{
+  "version": 1,
+  "sdk_version": "0.24.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://zfqibmjvtfpztcrjqojw.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ],
+    "jwks_uri": "https://zfqibmjvtfpztcrjqojw.supabase.co/auth/v1/.well-known/jwks.json"
+  },
+  "mcp": {
+    "server": {
+      "name": "unimarket-mcp",
+      "version": "0.1.0",
+      "title": "UniMarket MCP"
+    },
+    "tools": [
+      {
+        "name": "get_my_profile",
+        "title": "Get my UniMarket profile",
+        "description": "Read the signed-in user's UniMarket profile, role, and university.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "browse_campus_products",
+        "title": "Browse campus products",
+        "description": "List products from the signed-in user's university marketplace feed.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "category": {
+              "type": "string",
+              "description": "Optional category such as Food, Electronics, Clothing, Books, or Services."
+            },
+            "search": {
+              "type": "string",
+              "description": "Optional text to match against product or vendor names."
+            },
+            "limit": {
+              "type": "number",
+              "description": "Optional number of products to return. The app clamps this to a safe maximum."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_my_cart",
+        "title": "Get my cart",
+        "description": "Read the signed-in user's UniMarket cart items with product and vendor details.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "add_product_to_cart",
+        "title": "Add product to cart",
+        "description": "Add a product from the user's university marketplace to their cart.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "product_id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "The product id to add."
+            },
+            "quantity": {
+              "type": "number",
+              "description": "Optional quantity. The app clamps this to a safe positive integer."
+            }
+          },
+          "required": [
+            "product_id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_vendor_dashboard",
+        "title": "Get vendor dashboard",
+        "description": "Read the signed-in vendor's store status, recent orders, and summary counts.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "set_vendor_open",
+        "title": "Set vendor store open status",
+        "description": "Open or close the signed-in vendor's UniMarket store.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "is_open": {
+              "type": "boolean",
+              "description": "True to open the store; false to close it."
+            }
+          },
+          "required": [
+            "is_open"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
