@@ -21,6 +21,9 @@ import { LoadingSpinner } from "@/components/LoadingSpinner";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
+  validateSearch: (search: Record<string, unknown>) => ({
+    next: typeof search.next === "string" && search.next.startsWith("/") && !search.next.startsWith("//") ? search.next : "",
+  }),
   head: () => ({
     meta: [
       { title: "Sign in — UniMarket" },
@@ -58,6 +61,7 @@ const vendorExtraSchema = z.object({
 
 function AuthPage() {
   const navigate = useNavigate();
+  const { next } = Route.useSearch();
   const { session, profile, loading } = useAuth();
   const [universities, setUniversities] = useState<University[]>([]);
   const [uniLoading, setUniLoading] = useState(true);
@@ -77,6 +81,10 @@ function AuthPage() {
 
   useEffect(() => {
     if (loading || !session) return;
+    if (next) {
+      navigate({ href: next, replace: true });
+      return;
+    }
     // Wait briefly for profile to load; if none exists, default to student home.
     if (profile !== null) {
       navigate({ to: roleHome(profile.role), replace: true });
@@ -84,7 +92,7 @@ function AuthPage() {
       const t = setTimeout(() => navigate({ to: "/", replace: true }), 400);
       return () => clearTimeout(t);
     }
-  }, [loading, session, profile, navigate]);
+  }, [loading, session, profile, navigate, next]);
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-4 py-10">
@@ -108,13 +116,13 @@ function AuthPage() {
               <TabsTrigger value="signup">Sign Up</TabsTrigger>
             </TabsList>
             <TabsContent value="signin" className="mt-6">
-              <SignInForm />
+              <SignInForm next={next} />
             </TabsContent>
             <TabsContent value="signup" className="mt-6">
               {uniLoading ? (
                 <LoadingSpinner label="Loading universities..." />
               ) : (
-                <SignUpForm universities={universities} />
+                <SignUpForm universities={universities} next={next} />
               )}
             </TabsContent>
           </Tabs>
@@ -124,7 +132,7 @@ function AuthPage() {
   );
 }
 
-function SignInForm() {
+function SignInForm({ next }: { next: string }) {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -151,6 +159,10 @@ function SignInForm() {
     }
     setSubmitting(false);
     toast.success("Welcome back!");
+    if (next) {
+      navigate({ href: next, replace: true });
+      return;
+    }
     navigate({ to: roleHome(role), replace: true });
   };
 
@@ -185,7 +197,7 @@ function SignInForm() {
   );
 }
 
-function SignUpForm({ universities }: { universities: University[] }) {
+function SignUpForm({ universities, next }: { universities: University[]; next: string }) {
   const [role, setRole] = useState<SignupRole | null>(null);
   const [values, setValues] = useState({
     full_name: "",
@@ -224,7 +236,7 @@ function SignUpForm({ universities }: { universities: University[] }) {
       email: values.email,
       password: values.password,
       options: {
-        emailRedirectTo: window.location.origin,
+        emailRedirectTo: next ? `${window.location.origin}${next}` : window.location.origin,
         data: {
           full_name: values.full_name,
           phone: values.phone,
