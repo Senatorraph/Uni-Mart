@@ -1,174 +1,138 @@
-import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
-import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
-import { toast } from "sonner";
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
+import { Lock, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth-context";
 import { Navbar } from "@/components/Navbar";
-import { LoadingSpinner } from "@/components/LoadingSpinner";
+import { BottomNav } from "@/components/BottomNav";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/format";
-
-const DELIVERY_FEE = 500;
+import { CART_ITEMS } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/cart")({
-  ssr: false,
+  head: () => ({
+    meta: [
+      { title: "Your cart — UniMarket" },
+      { name: "description", content: "Review your campus orders, adjust quantities and check out securely with Paystack." },
+      { property: "og:title", content: "Your cart — UniMarket" },
+      { property: "og:description", content: "Review your campus orders and check out securely." },
+    ],
+  }),
   component: CartPage,
 });
 
-type CartRow = {
-  id: string;
-  quantity: number;
-  product_id: string;
-  products: {
-    id: string;
-    name: string;
-    price: number | string;
-    image_url: string | null;
-    images?: string[] | null;
-    vendor_id: string;
-    vendors?: { business_name: string | null } | null;
-  } | null;
-};
+const DELIVERY_FEE = 500;
 
 function CartPage() {
-  const navigate = useNavigate();
-  const { user, session, loading } = useAuth();
-  const [items, setItems] = useState<CartRow[]>([]);
-  const [fetching, setFetching] = useState(true);
-
-  useEffect(() => {
-    if (!loading && !session) navigate({ to: "/auth", search: { next: "" }, replace: true });
-  }, [loading, session, navigate]);
-
-  const load = async () => {
-    if (!user) return;
-    setFetching(true);
-    const { data, error } = await (supabase as any)
-      .from("cart_items")
-      .select("id, quantity, product_id, products(id, name, price, image_url, images, vendor_id, vendors(business_name))")
-      .eq("user_id", user.id);
-    if (error) toast.error(error.message);
-    setItems((data as any) ?? []);
-    setFetching(false);
-  };
-
-  useEffect(() => {
-    load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
-
-  const updateQty = async (id: string, quantity: number) => {
-    if (quantity < 1) return;
-    const { error } = await (supabase as any).from("cart_items").update({ quantity }).eq("id", id);
-    if (error) toast.error(error.message);
-    else load();
-  };
-
-  const remove = async (id: string) => {
-    const { error } = await (supabase as any).from("cart_items").delete().eq("id", id);
-    if (error) toast.error(error.message);
-    else load();
-  };
-
-  const subtotal = items.reduce((sum, it) => {
-    const price = Number(it.products?.price ?? 0);
-    return sum + price * it.quantity;
-  }, 0);
+  const [items, setItems] = useState(CART_ITEMS);
+  const subtotal = items.reduce((s, i) => s + i.price * i.qty, 0);
   const total = subtotal + (items.length ? DELIVERY_FEE : 0);
 
+  const setQty = (id: string, delta: number) =>
+    setItems((prev) =>
+      prev.map((i) => (i.id === id ? { ...i, qty: Math.max(1, i.qty + delta) } : i)),
+    );
+
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
-      <div className="mx-auto max-w-5xl px-4 py-8">
-        <h1 className="mb-6 text-2xl font-bold">Your Cart</h1>
-        {fetching ? (
-          <LoadingSpinner label="Loading cart..." />
-        ) : items.length === 0 ? (
+    <div className="min-h-screen bg-background pb-20 md:pb-0">
+      <Navbar cartCount={items.length} />
+
+      <div className="mx-auto max-w-6xl px-4 py-8">
+        <h1 className="mb-6 text-2xl font-extrabold">Your Cart</h1>
+
+        {items.length === 0 ? (
           <EmptyState
-            icon={ShoppingBag}
+            icon={ShoppingCart}
             title="Your cart is empty"
-            subtitle="Browse products on your campus and add them to your cart."
+            subtitle="Browse verified vendors on your campus and add something tasty."
             action={
-              <Button asChild>
-                <Link to="/">Start shopping</Link>
+              <Button asChild className="rounded-lg glow-primary">
+                <Link to="/">Start Shopping</Link>
               </Button>
             }
           />
         ) : (
-          <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-            <div className="space-y-3">
-              {items.map((it) => {
-                const p = it.products;
-                const img = p?.image_url ?? (Array.isArray(p?.images) ? p!.images![0] : null);
-                return (
-                  <div
-                    key={it.id}
-                    className="flex gap-4 rounded-xl border border-border bg-card p-3"
-                  >
-                    <div className="h-24 w-24 shrink-0 overflow-hidden rounded-lg bg-muted">
-                      {img ? (
-                        <img src={img} alt={p?.name ?? ""} className="h-full w-full object-cover" />
-                      ) : null}
+          <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
+            <div className="space-y-4">
+              {items.map((item) => (
+                <div
+                  key={item.id}
+                  className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 rounded-xl border border-border bg-card p-4"
+                >
+                  <div className="grid h-20 w-20 shrink-0 place-items-center rounded-lg bg-gradient-to-br from-primary/20 to-background text-3xl">
+                    {item.emoji}
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="truncate text-sm font-bold">{item.name}</p>
+                        <p className="text-xs text-accent">{item.vendor}</p>
+                        <p className="mt-1 text-sm font-extrabold">{formatNaira(item.price)}</p>
+                      </div>
+                      <button
+                        onClick={() => setItems((p) => p.filter((i) => i.id !== item.id))}
+                        className="shrink-0 rounded-lg p-2 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        aria-label="Remove item"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
-                    <div className="flex min-w-0 flex-1 flex-col justify-between">
-                      <div>
-                        <p className="line-clamp-1 font-medium">{p?.name}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {p?.vendors?.business_name ?? "Vendor"}
-                        </p>
-                        <p className="mt-1 text-sm font-semibold text-primary">
-                          {formatNaira(p?.price ?? 0)}
-                        </p>
-                      </div>
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center rounded-lg border border-border">
-                          <button className="p-1.5 hover:bg-muted" onClick={() => updateQty(it.id, it.quantity - 1)}>
-                            <Minus className="h-3.5 w-3.5" />
-                          </button>
-                          <span className="w-8 text-center text-sm">{it.quantity}</span>
-                          <button className="p-1.5 hover:bg-muted" onClick={() => updateQty(it.id, it.quantity + 1)}>
-                            <Plus className="h-3.5 w-3.5" />
-                          </button>
-                        </div>
-                        <button
-                          onClick={() => remove(it.id)}
-                          className="text-muted-foreground hover:text-destructive"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
+                    <div className="mt-3 flex w-fit items-center rounded-lg border border-border">
+                      <button className="p-2 transition-colors hover:bg-muted" onClick={() => setQty(item.id, -1)}>
+                        <Minus className="h-3.5 w-3.5" />
+                      </button>
+                      <span className="w-10 text-center text-sm font-bold">{item.qty}</span>
+                      <button className="p-2 transition-colors hover:bg-muted" onClick={() => setQty(item.id, 1)}>
+                        <Plus className="h-3.5 w-3.5" />
+                      </button>
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              ))}
             </div>
 
-            <div className="h-fit rounded-xl border border-border bg-card p-5">
-              <h2 className="mb-4 text-lg font-semibold">Order Summary</h2>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Subtotal</span>
-                  <span className="text-foreground">{formatNaira(subtotal)}</span>
+            <aside className="h-fit rounded-xl border border-border bg-card p-5 lg:sticky lg:top-24">
+              <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
+                Order Summary
+              </h2>
+              <dl className="mt-4 space-y-3 text-sm">
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Subtotal</dt>
+                  <dd className="font-semibold">{formatNaira(subtotal)}</dd>
                 </div>
-                <div className="flex justify-between text-muted-foreground">
-                  <span>Delivery fee</span>
-                  <span className="text-foreground">{formatNaira(DELIVERY_FEE)}</span>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Delivery Fee</dt>
+                  <dd className="font-semibold">{formatNaira(DELIVERY_FEE)}</dd>
                 </div>
-                <div className="mt-3 border-t border-border pt-3 flex justify-between text-base font-bold">
-                  <span>Total</span>
-                  <span className="text-primary">{formatNaira(total)}</span>
+                <div className="flex justify-between">
+                  <dt className="text-muted-foreground">Discount</dt>
+                  <dd className="font-semibold text-success">-₦0</dd>
                 </div>
+              </dl>
+              <div className="my-4 h-px bg-border" />
+              <div className="flex items-baseline justify-between">
+                <span className="text-sm text-muted-foreground">Total</span>
+                <span className="text-2xl font-extrabold">{formatNaira(total)}</span>
               </div>
-              <Button className="mt-5 w-full" size="lg">
-                Proceed to Checkout
+              <Button asChild className="mt-5 h-11 w-full rounded-lg font-bold glow-primary">
+                <Link to="/checkout">Proceed to Checkout</Link>
               </Button>
-            </div>
+              <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
+                <Lock className="h-3.5 w-3.5" /> Secured by Paystack
+              </p>
+              <div className="mt-3 flex justify-center gap-2 text-[10px] font-semibold text-muted-foreground">
+                {["VISA", "Mastercard", "Verve", "Transfer"].map((m) => (
+                  <span key={m} className="rounded border border-border px-2 py-1">
+                    {m}
+                  </span>
+                ))}
+              </div>
+            </aside>
           </div>
         )}
       </div>
+
+      <BottomNav />
     </div>
   );
 }
