@@ -1,116 +1,115 @@
-import { Link, useNavigate } from "@tanstack/react-router";
-import { Bell, LogOut, Search, ShoppingCart, User } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
+import { Bell, Menu, Search, ShoppingCart, X } from "lucide-react";
+import { useState } from "react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/lib/auth-context";
 
-export function Navbar() {
-  const { profile, user, signOut } = useAuth();
-  const navigate = useNavigate();
-  const [cartCount, setCartCount] = useState(0);
-  const [notifCount, setNotifCount] = useState(0);
+const NAV_LINKS = [
+  { to: "/", label: "Home" },
+  { to: "/orders", label: "My Orders" },
+  { to: "/vendor/dashboard", label: "Vendor" },
+  { to: "/rider/dashboard", label: "Rider" },
+  { to: "/admin/dashboard", label: "Admin" },
+] as const;
 
-  useEffect(() => {
-    if (!user) return;
-    const loadCounts = async () => {
-      const [{ count: c }, { count: n }] = await Promise.all([
-        (supabase as any).from("cart_items").select("*", { count: "exact", head: true }).eq("user_id", user.id),
-        (supabase as any).from("notifications").select("*", { count: "exact", head: true }).eq("user_id", user.id).eq("is_read", false),
-      ]);
-      setCartCount(c ?? 0);
-      setNotifCount(n ?? 0);
-    };
-    loadCounts();
-    const channel = (supabase as any)
-      .channel("nav-counts")
-      .on("postgres_changes", { event: "*", schema: "public", table: "cart_items", filter: `user_id=eq.${user.id}` }, loadCounts)
-      .on("postgres_changes", { event: "*", schema: "public", table: "notifications", filter: `user_id=eq.${user.id}` }, loadCounts)
-      .subscribe();
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user]);
+export function Logo({ className }: { className?: string }) {
+  return (
+    <span className={`text-lg font-extrabold tracking-tight ${className ?? ""}`}>
+      Uni<span className="text-primary">Market</span>
+    </span>
+  );
+}
+
+export function Navbar({ cartCount = 3 }: { cartCount?: number }) {
+  const [open, setOpen] = useState(false);
 
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-lg">
-      <div className="mx-auto flex h-16 max-w-7xl items-center gap-3 px-4">
-        <Link to="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary text-primary-foreground font-bold">
+      <div className="mx-auto grid h-16 max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4">
+        <Link to="/" className="flex shrink-0 items-center gap-2">
+          <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary font-extrabold text-primary-foreground glow-primary">
             U
           </div>
-          <span className="hidden text-lg font-bold sm:inline">
-            Uni<span className="text-primary">Market</span>
-          </span>
+          <Logo className="hidden sm:inline" />
         </Link>
 
-        <div className="relative flex-1 max-w-xl">
+        <div className="relative min-w-0 md:mx-6">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
-            placeholder="Search products, vendors..."
-            className="pl-9 bg-card border-border"
+            placeholder="Search products on campus..."
+            className="h-10 rounded-lg border-border bg-card pl-9"
           />
         </div>
 
-        <Link to="/cart" className="relative">
-          <Button variant="ghost" size="icon">
-            <ShoppingCart className="h-5 w-5" />
-          </Button>
-          {cartCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground">
-              {cartCount}
-            </span>
-          )}
-        </Link>
-
-        <div className="relative">
-          <Button variant="ghost" size="icon">
-            <Bell className="h-5 w-5" />
-          </Button>
-          {notifCount > 0 && (
-            <span className="absolute -right-1 -top-1 flex h-5 min-w-5 items-center justify-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
-              {notifCount}
-            </span>
-          )}
-        </div>
-
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="rounded-full bg-muted">
-              <User className="h-5 w-5" />
+        <div className="flex shrink-0 items-center gap-1">
+          <Link to="/cart" className="relative hidden sm:block">
+            <Button variant="ghost" size="icon" aria-label="Cart">
+              <ShoppingCart className="h-5 w-5" />
             </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              <div className="font-medium">{profile?.full_name ?? "Account"}</div>
-              <div className="text-xs font-normal text-muted-foreground capitalize">
-                {profile?.role ?? "student"}
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => navigate({ to: "/cart" })}>
-              <ShoppingCart className="mr-2 h-4 w-4" /> My Cart
-            </DropdownMenuItem>
-            <DropdownMenuItem
-              onClick={async () => {
-                await signOut();
-                navigate({ to: "/auth", search: { next: "" } });
-              }}
-            >
-              <LogOut className="mr-2 h-4 w-4" /> Sign Out
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            {cartCount > 0 && (
+              <span className="absolute -right-0.5 -top-0.5 grid h-5 min-w-5 place-items-center rounded-full bg-accent px-1 text-[10px] font-bold text-accent-foreground">
+                {cartCount}
+              </span>
+            )}
+          </Link>
+
+          <div className="relative hidden sm:block">
+            <Button variant="ghost" size="icon" aria-label="Notifications">
+              <Bell className="h-5 w-5" />
+            </Button>
+            <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive" />
+          </div>
+
+          <button className="hidden h-9 w-9 shrink-0 rounded-full bg-primary/20 text-sm font-bold text-primary ring-1 ring-primary/40 sm:block">
+            CO
+          </button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            className="md:hidden"
+            aria-label="Menu"
+            onClick={() => setOpen((v) => !v)}
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        </div>
       </div>
+
+      <nav className="hidden border-t border-border md:block">
+        <div className="mx-auto flex max-w-7xl gap-6 px-4 py-2 text-sm">
+          {NAV_LINKS.map((l) => (
+            <Link
+              key={l.to}
+              to={l.to}
+              className="text-muted-foreground transition-colors hover:text-foreground"
+              activeProps={{ className: "text-primary font-semibold" }}
+              activeOptions={{ exact: l.to === "/" }}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </div>
+      </nav>
+
+      {open && (
+        <nav className="border-t border-border bg-card md:hidden">
+          <div className="flex flex-col px-4 py-2">
+            {[...NAV_LINKS, { to: "/cart", label: "Cart" }, { to: "/auth", label: "Sign in" }].map(
+              (l) => (
+                <Link
+                  key={l.to}
+                  to={l.to}
+                  onClick={() => setOpen(false)}
+                  className="rounded-lg px-2 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                >
+                  {l.label}
+                </Link>
+              ),
+            )}
+          </div>
+        </nav>
+      )}
     </header>
   );
 }
