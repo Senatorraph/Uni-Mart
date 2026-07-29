@@ -1,22 +1,24 @@
-import { Badge } from "@/components/ui/badge";
-
 const STYLES: Record<string, string> = {
-  pending: "bg-amber-500/15 text-amber-400 border-amber-500/30",
+  pending: "bg-accent/15 text-accent border-accent/30",
   confirmed: "bg-sky-500/15 text-sky-400 border-sky-500/30",
-  preparing: "bg-indigo-500/15 text-indigo-400 border-indigo-500/30",
-  ready: "bg-violet-500/15 text-violet-400 border-violet-500/30",
-  out_for_delivery: "bg-purple-500/15 text-purple-300 border-purple-500/30",
-  delivered: "bg-emerald-500/15 text-emerald-400 border-emerald-500/30",
-  cancelled: "bg-red-500/15 text-red-400 border-red-500/30",
-  refunded: "bg-zinc-500/15 text-zinc-300 border-zinc-500/30",
+  preparing: "bg-indigo-500/15 text-indigo-300 border-indigo-500/30",
+  ready: "bg-violet-500/15 text-violet-300 border-violet-500/30",
+  picked_up: "bg-primary/20 text-primary border-primary/40",
+  out_for_delivery: "bg-primary/20 text-primary border-primary/40",
+  delivered: "bg-success/15 text-success border-success/30",
+  disputed: "bg-destructive/15 text-destructive border-destructive/30",
+  cancelled: "bg-destructive/15 text-destructive border-destructive/30",
+  refunded: "bg-muted text-muted-foreground border-border",
 };
 
-export function OrderStatusBadge({ status }: { status: string | null | undefined }) {
-  const s = (status ?? "pending").toLowerCase();
+export function OrderStatusBadge({ status }: { status: string }) {
+  const s = status.toLowerCase();
   const cls = STYLES[s] ?? "bg-muted text-muted-foreground border-border";
   return (
-    <Badge variant="outline" className={`capitalize ${cls}`}>
+    <span
+      className={`inline-flex items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold capitalize ${cls}`}
+    >
       {s.replace(/_/g, " ")}
-    </Badge>
+    </span>
   );
 }
