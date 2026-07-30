@@ -16,7 +16,7 @@ export const Route = createFileRoute("/")({
       { title: "UniMarket — Your Campus. Your Market." },
       { name: "description", content: "Shop food, gadgets, fashion and services from verified vendors on your Nigerian campus, delivered to your hostel in minutes." },
       { property: "og:title", content: "UniMarket — Your Campus. Your Market." },
-      { property: "og:description", content: "Shop from verified campus vendors with fast hostel delivery." },
+      { property: "og:description", content: "Shop food, gadgets, fashion and services from verified vendors on your Nigerian campus, delivered to your hostel in minutes." },
     ],
   }),
   component: Home,
