@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Package, Clock, Wallet, Boxes, Zap, TrendingUp } from "lucide-react";
 
-import { Navbar } from "@/components/Navbar";
+import { VendorLayout } from "@/components/layouts/VendorLayout";
 import { OrderStatusBadge } from "@/components/OrderStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
@@ -57,8 +57,7 @@ function VendorDashboard() {
   const max = Math.max(...FORECAST.map((f) => f.value));
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <VendorLayout title="Vendor Dashboard">
 
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-8">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
@@ -146,6 +145,6 @@ function VendorDashboard() {
           <p className="mt-3 text-[11px] font-semibold text-accent">Powered by UniMarket AI</p>
         </div>
       </div>
-    </div>
+    </VendorLayout>
   );
 }

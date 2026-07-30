@@ -9,24 +9,36 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as ProfileRouteImport } from './routes/profile'
 import { Route as McpRouteImport } from './routes/mcp'
 import { Route as CheckoutRouteImport } from './routes/checkout'
 import { Route as CartRouteImport } from './routes/cart'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OrdersIndexRouteImport } from './routes/orders.index'
+import { Route as VendorSettingsRouteImport } from './routes/vendor.settings'
 import { Route as VendorProductsRouteImport } from './routes/vendor.products'
 import { Route as VendorOrdersRouteImport } from './routes/vendor.orders'
 import { Route as VendorDashboardRouteImport } from './routes/vendor.dashboard'
 import { Route as RiderDashboardRouteImport } from './routes/rider.dashboard'
 import { Route as ProductIdRouteImport } from './routes/product.$id'
 import { Route as OrdersIdRouteImport } from './routes/orders.$id'
+import { Route as AdminVendorsRouteImport } from './routes/admin.vendors'
+import { Route as AdminStudentsRouteImport } from './routes/admin.students'
+import { Route as AdminRidersRouteImport } from './routes/admin.riders'
+import { Route as AdminDisputesRouteImport } from './routes/admin.disputes'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
+import { Route as AdminAnalyticsRouteImport } from './routes/admin.analytics'
 import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
 import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
 
+const ProfileRoute = ProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const McpRoute = McpRouteImport.update({
   id: '/mcp',
   path: '/mcp',
@@ -55,6 +67,11 @@ const IndexRoute = IndexRouteImport.update({
 const OrdersIndexRoute = OrdersIndexRouteImport.update({
   id: '/orders/',
   path: '/orders/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VendorSettingsRoute = VendorSettingsRouteImport.update({
+  id: '/vendor/settings',
+  path: '/vendor/settings',
   getParentRoute: () => rootRouteImport,
 } as any)
 const VendorProductsRoute = VendorProductsRouteImport.update({
@@ -87,9 +104,34 @@ const OrdersIdRoute = OrdersIdRouteImport.update({
   path: '/orders/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminVendorsRoute = AdminVendorsRouteImport.update({
+  id: '/admin/vendors',
+  path: '/admin/vendors',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminStudentsRoute = AdminStudentsRouteImport.update({
+  id: '/admin/students',
+  path: '/admin/students',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminRidersRoute = AdminRidersRouteImport.update({
+  id: '/admin/riders',
+  path: '/admin/riders',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminDisputesRoute = AdminDisputesRouteImport.update({
+  id: '/admin/disputes',
+  path: '/admin/disputes',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/admin/dashboard',
   path: '/admin/dashboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AdminAnalyticsRoute = AdminAnalyticsRouteImport.update({
+  id: '/admin/analytics',
+  path: '/admin/analytics',
   getParentRoute: () => rootRouteImport,
 } as any)
 const Char91DotwellKnownChar93OauthProtectedResourceRoute =
@@ -122,15 +164,22 @@ export interface FileRoutesByFullPath {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/mcp': typeof McpRoute
+  '/profile': typeof ProfileRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/disputes': typeof AdminDisputesRoute
+  '/admin/riders': typeof AdminRidersRoute
+  '/admin/students': typeof AdminStudentsRoute
+  '/admin/vendors': typeof AdminVendorsRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
   '/rider/dashboard': typeof RiderDashboardRoute
   '/vendor/dashboard': typeof VendorDashboardRoute
   '/vendor/orders': typeof VendorOrdersRoute
   '/vendor/products': typeof VendorProductsRoute
+  '/vendor/settings': typeof VendorSettingsRoute
   '/orders/': typeof OrdersIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -141,15 +190,22 @@ export interface FileRoutesByTo {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/mcp': typeof McpRoute
+  '/profile': typeof ProfileRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/disputes': typeof AdminDisputesRoute
+  '/admin/riders': typeof AdminRidersRoute
+  '/admin/students': typeof AdminStudentsRoute
+  '/admin/vendors': typeof AdminVendorsRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
   '/rider/dashboard': typeof RiderDashboardRoute
   '/vendor/dashboard': typeof VendorDashboardRoute
   '/vendor/orders': typeof VendorOrdersRoute
   '/vendor/products': typeof VendorProductsRoute
+  '/vendor/settings': typeof VendorSettingsRoute
   '/orders': typeof OrdersIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -161,15 +217,22 @@ export interface FileRoutesById {
   '/cart': typeof CartRoute
   '/checkout': typeof CheckoutRoute
   '/mcp': typeof McpRoute
+  '/profile': typeof ProfileRoute
   '/.mcp/list-tools': typeof Char91DotmcpChar93ListToolsRoute
   '/.well-known/oauth-protected-resource': typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  '/admin/analytics': typeof AdminAnalyticsRoute
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/disputes': typeof AdminDisputesRoute
+  '/admin/riders': typeof AdminRidersRoute
+  '/admin/students': typeof AdminStudentsRoute
+  '/admin/vendors': typeof AdminVendorsRoute
   '/orders/$id': typeof OrdersIdRoute
   '/product/$id': typeof ProductIdRoute
   '/rider/dashboard': typeof RiderDashboardRoute
   '/vendor/dashboard': typeof VendorDashboardRoute
   '/vendor/orders': typeof VendorOrdersRoute
   '/vendor/products': typeof VendorProductsRoute
+  '/vendor/settings': typeof VendorSettingsRoute
   '/orders/': typeof OrdersIndexRoute
   '/.lovable/oauth/consent': typeof DotlovableOauthConsentRoute
   '/.mcp/invoke-tool/$tool': typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -182,15 +245,22 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/mcp'
+    | '/profile'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/analytics'
     | '/admin/dashboard'
+    | '/admin/disputes'
+    | '/admin/riders'
+    | '/admin/students'
+    | '/admin/vendors'
     | '/orders/$id'
     | '/product/$id'
     | '/rider/dashboard'
     | '/vendor/dashboard'
     | '/vendor/orders'
     | '/vendor/products'
+    | '/vendor/settings'
     | '/orders/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
@@ -201,15 +271,22 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/mcp'
+    | '/profile'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/analytics'
     | '/admin/dashboard'
+    | '/admin/disputes'
+    | '/admin/riders'
+    | '/admin/students'
+    | '/admin/vendors'
     | '/orders/$id'
     | '/product/$id'
     | '/rider/dashboard'
     | '/vendor/dashboard'
     | '/vendor/orders'
     | '/vendor/products'
+    | '/vendor/settings'
     | '/orders'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
@@ -220,15 +297,22 @@ export interface FileRouteTypes {
     | '/cart'
     | '/checkout'
     | '/mcp'
+    | '/profile'
     | '/.mcp/list-tools'
     | '/.well-known/oauth-protected-resource'
+    | '/admin/analytics'
     | '/admin/dashboard'
+    | '/admin/disputes'
+    | '/admin/riders'
+    | '/admin/students'
+    | '/admin/vendors'
     | '/orders/$id'
     | '/product/$id'
     | '/rider/dashboard'
     | '/vendor/dashboard'
     | '/vendor/orders'
     | '/vendor/products'
+    | '/vendor/settings'
     | '/orders/'
     | '/.lovable/oauth/consent'
     | '/.mcp/invoke-tool/$tool'
@@ -240,15 +324,22 @@ export interface RootRouteChildren {
   CartRoute: typeof CartRoute
   CheckoutRoute: typeof CheckoutRoute
   McpRoute: typeof McpRoute
+  ProfileRoute: typeof ProfileRoute
   Char91DotmcpChar93ListToolsRoute: typeof Char91DotmcpChar93ListToolsRoute
   Char91DotwellKnownChar93OauthProtectedResourceRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRoute
+  AdminAnalyticsRoute: typeof AdminAnalyticsRoute
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminDisputesRoute: typeof AdminDisputesRoute
+  AdminRidersRoute: typeof AdminRidersRoute
+  AdminStudentsRoute: typeof AdminStudentsRoute
+  AdminVendorsRoute: typeof AdminVendorsRoute
   OrdersIdRoute: typeof OrdersIdRoute
   ProductIdRoute: typeof ProductIdRoute
   RiderDashboardRoute: typeof RiderDashboardRoute
   VendorDashboardRoute: typeof VendorDashboardRoute
   VendorOrdersRoute: typeof VendorOrdersRoute
   VendorProductsRoute: typeof VendorProductsRoute
+  VendorSettingsRoute: typeof VendorSettingsRoute
   OrdersIndexRoute: typeof OrdersIndexRoute
   DotlovableOauthConsentRoute: typeof DotlovableOauthConsentRoute
   Char91DotmcpChar93InvokeToolToolRoute: typeof Char91DotmcpChar93InvokeToolToolRoute
@@ -256,6 +347,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/profile': {
+      id: '/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof ProfileRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mcp': {
       id: '/mcp'
       path: '/mcp'
@@ -296,6 +394,13 @@ declare module '@tanstack/react-router' {
       path: '/orders'
       fullPath: '/orders/'
       preLoaderRoute: typeof OrdersIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vendor/settings': {
+      id: '/vendor/settings'
+      path: '/vendor/settings'
+      fullPath: '/vendor/settings'
+      preLoaderRoute: typeof VendorSettingsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/vendor/products': {
@@ -340,11 +445,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OrdersIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/vendors': {
+      id: '/admin/vendors'
+      path: '/admin/vendors'
+      fullPath: '/admin/vendors'
+      preLoaderRoute: typeof AdminVendorsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/students': {
+      id: '/admin/students'
+      path: '/admin/students'
+      fullPath: '/admin/students'
+      preLoaderRoute: typeof AdminStudentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/riders': {
+      id: '/admin/riders'
+      path: '/admin/riders'
+      fullPath: '/admin/riders'
+      preLoaderRoute: typeof AdminRidersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/disputes': {
+      id: '/admin/disputes'
+      path: '/admin/disputes'
+      fullPath: '/admin/disputes'
+      preLoaderRoute: typeof AdminDisputesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/admin/dashboard': {
       id: '/admin/dashboard'
       path: '/admin/dashboard'
       fullPath: '/admin/dashboard'
       preLoaderRoute: typeof AdminDashboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/admin/analytics': {
+      id: '/admin/analytics'
+      path: '/admin/analytics'
+      fullPath: '/admin/analytics'
+      preLoaderRoute: typeof AdminAnalyticsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.well-known/oauth-protected-resource': {
@@ -384,16 +524,23 @@ const rootRouteChildren: RootRouteChildren = {
   CartRoute: CartRoute,
   CheckoutRoute: CheckoutRoute,
   McpRoute: McpRoute,
+  ProfileRoute: ProfileRoute,
   Char91DotmcpChar93ListToolsRoute: Char91DotmcpChar93ListToolsRoute,
   Char91DotwellKnownChar93OauthProtectedResourceRoute:
     Char91DotwellKnownChar93OauthProtectedResourceRoute,
+  AdminAnalyticsRoute: AdminAnalyticsRoute,
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminDisputesRoute: AdminDisputesRoute,
+  AdminRidersRoute: AdminRidersRoute,
+  AdminStudentsRoute: AdminStudentsRoute,
+  AdminVendorsRoute: AdminVendorsRoute,
   OrdersIdRoute: OrdersIdRoute,
   ProductIdRoute: ProductIdRoute,
   RiderDashboardRoute: RiderDashboardRoute,
   VendorDashboardRoute: VendorDashboardRoute,
   VendorOrdersRoute: VendorOrdersRoute,
   VendorProductsRoute: VendorProductsRoute,
+  VendorSettingsRoute: VendorSettingsRoute,
   OrdersIndexRoute: OrdersIndexRoute,
   DotlovableOauthConsentRoute: DotlovableOauthConsentRoute,
   Char91DotmcpChar93InvokeToolToolRoute: Char91DotmcpChar93InvokeToolToolRoute,

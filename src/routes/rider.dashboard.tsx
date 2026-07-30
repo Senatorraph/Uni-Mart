@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Camera, MapPin, Phone } from "lucide-react";
 
-import { Navbar } from "@/components/Navbar";
+import { RiderLayout } from "@/components/layouts/RiderLayout";
 import { OrderStatusBadge } from "@/components/OrderStatusBadge";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/format";
@@ -24,8 +24,7 @@ function RiderDashboard() {
   const [active, setActive] = useState<string | null>(RIDER_JOBS[0].id);
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <RiderLayout>
 
       <div className="mx-auto max-w-5xl space-y-8 px-4 py-8">
         <h1 className="text-2xl font-extrabold">Rider Dashboard</h1>
@@ -106,6 +105,6 @@ function RiderDashboard() {
           </div>
         </section>
       </div>
-    </div>
+    </RiderLayout>
   );
 }
