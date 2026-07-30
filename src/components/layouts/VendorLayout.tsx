@@ -58,7 +58,7 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
       </Link>
       <Link
         to="/auth"
-        search={{ next: undefined }}
+        search={{ next: "" }}
         onClick={onNavigate}
         className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive transition-colors hover:bg-destructive/10"
       >
