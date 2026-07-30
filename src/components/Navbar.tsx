@@ -1,6 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Bell, Menu, Search, ShoppingCart, X } from "lucide-react";
-import { useState } from "react";
+import { Bell, Search, ShoppingCart } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
@@ -19,8 +18,6 @@ export function Logo({ className }: { className?: string }) {
 }
 
 export function Navbar({ cartCount = 3 }: { cartCount?: number }) {
-  const [open, setOpen] = useState(false);
-
   return (
     <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-lg">
       <div className="mx-auto grid h-16 max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4">
@@ -40,7 +37,7 @@ export function Navbar({ cartCount = 3 }: { cartCount?: number }) {
         </div>
 
         <div className="flex shrink-0 items-center gap-1">
-          <Link to="/cart" className="relative hidden sm:block">
+          <Link to="/cart" className="relative">
             <Button variant="ghost" size="icon" aria-label="Cart">
               <ShoppingCart className="h-5 w-5" />
             </Button>
