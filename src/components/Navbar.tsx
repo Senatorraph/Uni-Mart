@@ -58,19 +58,11 @@ export function Navbar({ cartCount = 3 }: { cartCount?: number }) {
             <span className="absolute right-2 top-2 h-2 w-2 rounded-full bg-destructive" />
           </div>
 
-          <button className="hidden h-9 w-9 shrink-0 rounded-full bg-primary/20 text-sm font-bold text-primary ring-1 ring-primary/40 sm:block">
-            CO
-          </button>
-
-          <Button
-            variant="ghost"
-            size="icon"
-            className="md:hidden"
-            aria-label="Menu"
-            onClick={() => setOpen((v) => !v)}
-          >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
+          <Link to="/profile" aria-label="Profile" className="shrink-0">
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-primary/20 text-sm font-bold text-primary ring-1 ring-primary/40">
+              CO
+            </span>
+          </Link>
         </div>
       </div>
 
@@ -89,25 +81,6 @@ export function Navbar({ cartCount = 3 }: { cartCount?: number }) {
           ))}
         </div>
       </nav>
-
-      {open && (
-        <nav className="border-t border-border bg-card md:hidden">
-          <div className="flex flex-col px-4 py-2">
-            {[...NAV_LINKS, { to: "/cart", label: "Cart" }, { to: "/auth", label: "Sign in" }].map(
-              (l) => (
-                <Link
-                  key={l.to}
-                  to={l.to}
-                  onClick={() => setOpen(false)}
-                  className="rounded-lg px-2 py-3 text-sm text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
-                >
-                  {l.label}
-                </Link>
-              ),
-            )}
-          </div>
-        </nav>
-      )}
     </header>
   );
 }
