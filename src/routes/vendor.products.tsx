@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Grid2x2, List, Pencil, Trash2, UploadCloud } from "lucide-react";
 
-import { Navbar } from "@/components/Navbar";
+import { VendorLayout } from "@/components/layouts/VendorLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -85,8 +85,7 @@ function VendorProducts() {
   const [view, setView] = useState<"list" | "grid">("list");
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <VendorLayout title="My Products">
 
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-8">
         <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4">
@@ -186,6 +185,6 @@ function VendorProducts() {
           </div>
         )}
       </div>
-    </div>
+    </VendorLayout>
   );
 }

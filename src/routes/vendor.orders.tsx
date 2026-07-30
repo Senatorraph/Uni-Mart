@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 
-import { Navbar } from "@/components/Navbar";
+import { VendorLayout } from "@/components/layouts/VendorLayout";
 import { OrderStatusBadge } from "@/components/OrderStatusBadge";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
@@ -35,8 +35,7 @@ function VendorOrders() {
   const orders = filter === "All" ? ORDERS : ORDERS.filter((o) => o.status === key);
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <VendorLayout title="Order Management">
 
       <div className="mx-auto max-w-5xl px-4 py-8">
         <h1 className="text-2xl font-extrabold">Order Management</h1>
@@ -110,6 +109,6 @@ function VendorOrders() {
           )}
         </div>
       </div>
-    </div>
+    </VendorLayout>
   );
 }

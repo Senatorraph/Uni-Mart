@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Store, Clock, Package, AlertTriangle } from "lucide-react";
 
-import { Navbar } from "@/components/Navbar";
+import { AdminLayout } from "@/components/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { DISPUTES, FORECAST, PENDING_VENDORS } from "@/lib/mock-data";
 
@@ -21,8 +21,7 @@ function AdminDashboard() {
   const max = Math.max(...FORECAST.map((f) => f.value));
 
   return (
-    <div className="min-h-screen bg-background">
-      <Navbar />
+    <AdminLayout title="Admin Dashboard">
 
       <div className="mx-auto max-w-7xl space-y-6 px-4 py-8">
         <h1 className="text-2xl font-extrabold">Admin Dashboard</h1>
@@ -148,6 +147,6 @@ function AdminDashboard() {
           </div>
         </section>
       </div>
-    </div>
+    </AdminLayout>
   );
 }
