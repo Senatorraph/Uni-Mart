@@ -7,9 +7,7 @@ import { Button } from "@/components/ui/button";
 const NAV_LINKS = [
   { to: "/", label: "Home" },
   { to: "/orders", label: "My Orders" },
-  { to: "/vendor/dashboard", label: "Vendor" },
-  { to: "/rider/dashboard", label: "Rider" },
-  { to: "/admin/dashboard", label: "Admin" },
+  { to: "/profile", label: "Profile" },
 ] as const;
 
 export function Logo({ className }: { className?: string }) {
