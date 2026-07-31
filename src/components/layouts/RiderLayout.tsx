@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import { Bell } from "lucide-react";
 
@@ -10,11 +10,19 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { useAuth } from "@/context/AuthContext";
 
 const TABS = ["Available Jobs", "Active Delivery", "Completed"] as const;
 
 export function RiderLayout({ children }: { children: ReactNode }) {
   const [tab, setTab] = useState<string>(TABS[0]);
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate({ to: "/auth", search: { next: "" } });
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -51,10 +59,8 @@ export function RiderLayout({ children }: { children: ReactNode }) {
                 <DropdownMenuItem asChild>
                   <Link to="/profile">Profile</Link>
                 </DropdownMenuItem>
-                <DropdownMenuItem asChild>
-                  <Link to="/auth" search={{ next: "" }} className="text-destructive">
-                    Sign Out
-                  </Link>
+                <DropdownMenuItem onSelect={handleSignOut} className="text-destructive">
+                  Sign Out
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

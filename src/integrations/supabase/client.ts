@@ -25,3 +25,19 @@ export const supabase = new Proxy({} as ReturnType<typeof createSupabaseClient>,
     return Reflect.get(_supabase, prop, receiver);
   },
 });
+
+// Temporary connectivity check — remove once the Supabase connection is confirmed live.
+export async function testConnection() {
+  const { data, error } = await supabase
+    .from('universities')
+    .select('name, short_name')
+    .eq('is_active', true);
+
+  if (error) {
+    console.error('Supabase connection failed:', error.message);
+    return false;
+  }
+
+  console.log('Supabase connected. Universities:', data);
+  return true;
+}

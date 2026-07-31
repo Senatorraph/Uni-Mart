@@ -12,7 +12,7 @@ import { Toaster } from "sonner";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import { AuthProvider } from "@/lib/auth-context";
+import { AuthProvider } from "@/context/AuthContext";
 
 function NotFoundComponent() {
   return (

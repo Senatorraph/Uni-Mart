@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatNaira } from "@/lib/format";
 import { CART_ITEMS } from "@/lib/mock-data";
+import { StudentRoute } from "@/components/ProtectedRoute";
 
 export const Route = createFileRoute("/checkout")({
   head: () => ({
@@ -19,7 +20,11 @@ export const Route = createFileRoute("/checkout")({
       { property: "og:description", content: "Confirm delivery details and pay securely on UniMarket." },
     ],
   }),
-  component: Checkout,
+  component: () => (
+    <StudentRoute>
+      <Checkout />
+    </StudentRoute>
+  ),
 });
 
 const STEPS = ["Cart", "Checkout", "Payment", "Confirmation"];

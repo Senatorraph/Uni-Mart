@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/format";
 import { PRODUCTS, REVIEWS, VENDORS } from "@/lib/mock-data";
+import { StudentRoute } from "@/components/ProtectedRoute";
 
 export const Route = createFileRoute("/product/$id")({
   head: () => ({
@@ -20,7 +21,11 @@ export const Route = createFileRoute("/product/$id")({
       { property: "og:description", content: "See prices, vendor ratings and reviews on UniMarket." },
     ],
   }),
-  component: ProductDetail,
+  component: () => (
+    <StudentRoute>
+      <ProductDetail />
+    </StudentRoute>
+  ),
 });
 
 function ProductDetail() {

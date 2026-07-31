@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatNaira } from "@/lib/format";
 import { ORDERS } from "@/lib/mock-data";
+import { VendorRoute } from "@/components/ProtectedRoute";
 
 export const Route = createFileRoute("/vendor/orders")({
   head: () => ({
@@ -24,7 +25,11 @@ export const Route = createFileRoute("/vendor/orders")({
       { property: "og:description", content: "Confirm, track and resolve orders for your store." },
     ],
   }),
-  component: VendorOrders,
+  component: () => (
+    <VendorRoute>
+      <VendorOrders />
+    </VendorRoute>
+  ),
 });
 
 const FILTERS = ["All", "Pending", "Confirmed", "Picked Up", "Delivered", "Disputed"];

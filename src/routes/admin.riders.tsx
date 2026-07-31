@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { AdminLayout } from "@/components/layouts/AdminLayout";
+import { AdminRoute } from "@/components/ProtectedRoute";
 
 export const Route = createFileRoute("/admin/riders")({
   head: () => ({
@@ -11,7 +12,11 @@ export const Route = createFileRoute("/admin/riders")({
       { property: "og:description", content: "Manage campus delivery riders, verification and performance." },
     ],
   }),
-  component: Page,
+  component: () => (
+    <AdminRoute>
+      <Page />
+    </AdminRoute>
+  ),
 });
 
 function Page() {

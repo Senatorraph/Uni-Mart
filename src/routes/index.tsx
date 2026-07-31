@@ -9,6 +9,7 @@ import { ProductCard } from "@/components/ProductCard";
 import { VendorCard } from "@/components/VendorCard";
 import { Button } from "@/components/ui/button";
 import { CATEGORIES, PRODUCTS, VENDORS } from "@/lib/mock-data";
+import { StudentRoute } from "@/components/ProtectedRoute";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -19,7 +20,11 @@ export const Route = createFileRoute("/")({
       { property: "og:description", content: "Shop food, gadgets, fashion and services from verified vendors on your Nigerian campus, delivered to your hostel in minutes." },
     ],
   }),
-  component: Home,
+  component: () => (
+    <StudentRoute>
+      <Home />
+    </StudentRoute>
+  ),
 });
 
 function Home() {

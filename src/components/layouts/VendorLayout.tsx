@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useNavigate } from "@tanstack/react-router";
 import { useState, type ReactNode } from "react";
 import {
   ArrowLeft,
@@ -15,6 +15,7 @@ import {
 import { Logo } from "@/components/Navbar";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/context/AuthContext";
 
 const ITEMS = [
   { to: "/vendor/dashboard", label: "Dashboard", icon: LayoutGrid },
@@ -24,6 +25,15 @@ const ITEMS = [
 ] as const;
 
 function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    onNavigate?.();
+    navigate({ to: "/auth", search: { next: "" } });
+  };
+
   return (
     <div className="flex h-full flex-col gap-2 p-4">
       <Link to="/vendor/dashboard" onClick={onNavigate} className="mb-4 flex items-center gap-2 px-2">
@@ -56,15 +66,13 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
         <ArrowLeft className="h-4 w-4 shrink-0" />
         Back to Marketplace
       </Link>
-      <Link
-        to="/auth"
-        search={{ next: "" }}
-        onClick={onNavigate}
+      <button
+        onClick={handleSignOut}
         className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-destructive transition-colors hover:bg-destructive/10"
       >
         <LogOut className="h-4 w-4 shrink-0" />
         Sign Out
-      </Link>
+      </button>
     </div>
   );
 }

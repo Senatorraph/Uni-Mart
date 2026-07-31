@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/format";
 import { CART_ITEMS } from "@/lib/mock-data";
+import { StudentRoute } from "@/components/ProtectedRoute";
 
 export const Route = createFileRoute("/cart")({
   head: () => ({
@@ -18,7 +19,11 @@ export const Route = createFileRoute("/cart")({
       { property: "og:description", content: "Review your campus orders and check out securely." },
     ],
   }),
-  component: CartPage,
+  component: () => (
+    <StudentRoute>
+      <CartPage />
+    </StudentRoute>
+  ),
 });
 
 const DELIVERY_FEE = 500;

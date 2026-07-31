@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Bell,
   ClipboardList,
@@ -13,6 +13,8 @@ import { Navbar } from "@/components/Navbar";
 import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/format";
+import { StudentRoute } from "@/components/ProtectedRoute";
+import { useAuth } from "@/context/AuthContext";
 
 export const Route = createFileRoute("/profile")({
   head: () => ({
@@ -23,7 +25,11 @@ export const Route = createFileRoute("/profile")({
       { property: "og:description", content: "Your campus profile, order stats and account settings." },
     ],
   }),
-  component: ProfilePage,
+  component: () => (
+    <StudentRoute>
+      <ProfilePage />
+    </StudentRoute>
+  ),
 });
 
 const MENU = [
@@ -34,6 +40,14 @@ const MENU = [
 ];
 
 function ProfilePage() {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    await signOut();
+    navigate({ to: "/auth", search: { next: "" } });
+  };
+
   return (
     <div className="min-h-screen bg-background pb-24 md:pb-0">
       <Navbar />
@@ -100,13 +114,12 @@ function ProfilePage() {
             );
           })}
 
-          <Link
-            to="/auth"
-            search={{ next: "" }}
+          <button
+            onClick={handleSignOut}
             className="flex w-full items-center gap-3 px-5 py-4 text-sm font-semibold text-destructive transition-colors hover:bg-destructive/10"
           >
             <LogOut className="h-4 w-4" /> Sign Out
-          </Link>
+          </button>
         </section>
       </div>
 

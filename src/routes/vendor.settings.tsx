@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 
 import { VendorLayout } from "@/components/layouts/VendorLayout";
+import { VendorRoute } from "@/components/ProtectedRoute";
 
 export const Route = createFileRoute("/vendor/settings")({
   head: () => ({
@@ -11,7 +12,11 @@ export const Route = createFileRoute("/vendor/settings")({
       { property: "og:description", content: "Manage your campus store name, category, opening hours and payout details." },
     ],
   }),
-  component: Page,
+  component: () => (
+    <VendorRoute>
+      <Page />
+    </VendorRoute>
+  ),
 });
 
 function Page() {

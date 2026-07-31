@@ -4,6 +4,7 @@ import { Store, Clock, Package, AlertTriangle } from "lucide-react";
 import { AdminLayout } from "@/components/layouts/AdminLayout";
 import { Button } from "@/components/ui/button";
 import { DISPUTES, FORECAST, PENDING_VENDORS } from "@/lib/mock-data";
+import { AdminRoute } from "@/components/ProtectedRoute";
 
 export const Route = createFileRoute("/admin/dashboard")({
   head: () => ({
@@ -14,7 +15,11 @@ export const Route = createFileRoute("/admin/dashboard")({
       { property: "og:description", content: "Approve vendors, review disputes and monitor analytics." },
     ],
   }),
-  component: AdminDashboard,
+  component: () => (
+    <AdminRoute>
+      <AdminDashboard />
+    </AdminRoute>
+  ),
 });
 
 function AdminDashboard() {

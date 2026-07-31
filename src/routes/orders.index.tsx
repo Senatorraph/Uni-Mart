@@ -9,6 +9,7 @@ import { OrderStatusBadge } from "@/components/OrderStatusBadge";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/format";
 import { ORDERS } from "@/lib/mock-data";
+import { StudentRoute } from "@/components/ProtectedRoute";
 
 export const Route = createFileRoute("/orders/")({
   head: () => ({
@@ -19,7 +20,11 @@ export const Route = createFileRoute("/orders/")({
       { property: "og:description", content: "Track every campus order you have placed." },
     ],
   }),
-  component: OrdersPage,
+  component: () => (
+    <StudentRoute>
+      <OrdersPage />
+    </StudentRoute>
+  ),
 });
 
 const FILTERS = ["All", "Pending", "Delivered", "Disputed"];

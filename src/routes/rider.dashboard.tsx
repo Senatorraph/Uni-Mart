@@ -7,6 +7,7 @@ import { OrderStatusBadge } from "@/components/OrderStatusBadge";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/format";
 import { RIDER_JOBS, ORDERS } from "@/lib/mock-data";
+import { RiderRoute } from "@/components/ProtectedRoute";
 
 export const Route = createFileRoute("/rider/dashboard")({
   head: () => ({
@@ -17,7 +18,11 @@ export const Route = createFileRoute("/rider/dashboard")({
       { property: "og:description", content: "Accept delivery jobs and complete campus deliveries." },
     ],
   }),
-  component: RiderDashboard,
+  component: () => (
+    <RiderRoute>
+      <RiderDashboard />
+    </RiderRoute>
+  ),
 });
 
 function RiderDashboard() {

@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { formatNaira } from "@/lib/format";
 import { FORECAST, ORDERS } from "@/lib/mock-data";
+import { VendorRoute } from "@/components/ProtectedRoute";
 
 export const Route = createFileRoute("/vendor/dashboard")({
   head: () => ({
@@ -18,7 +19,11 @@ export const Route = createFileRoute("/vendor/dashboard")({
       { property: "og:description", content: "Track orders, revenue and demand forecasts for your store." },
     ],
   }),
-  component: VendorDashboard,
+  component: () => (
+    <VendorRoute>
+      <VendorDashboard />
+    </VendorRoute>
+  ),
 });
 
 function StatCard({

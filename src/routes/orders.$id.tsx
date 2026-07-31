@@ -6,6 +6,7 @@ import { BottomNav } from "@/components/BottomNav";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/format";
 import { ORDERS } from "@/lib/mock-data";
+import { StudentRoute } from "@/components/ProtectedRoute";
 
 export const Route = createFileRoute("/orders/$id")({
   head: () => ({
@@ -16,7 +17,11 @@ export const Route = createFileRoute("/orders/$id")({
       { property: "og:description", content: "Follow your campus delivery step by step." },
     ],
   }),
-  component: OrderTracking,
+  component: () => (
+    <StudentRoute>
+      <OrderTracking />
+    </StudentRoute>
+  ),
 });
 
 const STEPS = [

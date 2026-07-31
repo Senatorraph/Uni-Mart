@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { formatNaira } from "@/lib/format";
 import { BUSINESS_CATEGORIES, PRODUCTS } from "@/lib/mock-data";
+import { VendorRoute } from "@/components/ProtectedRoute";
 
 export const Route = createFileRoute("/vendor/products")({
   head: () => ({
@@ -27,7 +28,11 @@ export const Route = createFileRoute("/vendor/products")({
       { property: "og:description", content: "Add, edit and manage your campus store products." },
     ],
   }),
-  component: VendorProducts,
+  component: () => (
+    <VendorRoute>
+      <VendorProducts />
+    </VendorRoute>
+  ),
 });
 
 function ProductForm() {
