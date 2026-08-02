@@ -205,6 +205,7 @@ export interface CartItemProduct {
   price: number
   compare_price: number | null
   images: string[]
+  vendor_id: string
   vendor: {
     business_name: string
     is_open: boolean

@@ -55,7 +55,7 @@ export function useCart() {
         quantity,
         created_at,
         product:products(
-          id, name, price, compare_price, images,
+          id, name, price, compare_price, images, vendor_id,
           vendor:vendors(business_name, is_open)
         )
       `,
@@ -115,7 +115,7 @@ export function useCart() {
         quantity,
         created_at,
         product:products(
-          id, name, price, compare_price, images,
+          id, name, price, compare_price, images, vendor_id,
           vendor:vendors(business_name, is_open)
         )
       `,
