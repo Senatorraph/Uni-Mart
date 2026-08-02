@@ -1,14 +1,18 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { Zap } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { Search, Star, Zap } from "lucide-react";
 
 import { StudentLayout } from "@/components/layouts/StudentLayout";
 import { Footer } from "@/components/Footer";
-import { ProductCard } from "@/components/ProductCard";
-import { VendorCard } from "@/components/VendorCard";
+import { StudentProductCard } from "@/components/StudentProductCard";
+import { OpenBadge } from "@/components/VendorCard";
+import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
-import { CATEGORIES, PRODUCTS, VENDORS } from "@/lib/mock-data";
+import { Input } from "@/components/ui/input";
+import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 import { StudentRoute } from "@/components/ProtectedRoute";
+import type { ProductWithVendor } from "@/types";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -34,9 +38,119 @@ export const Route = createFileRoute("/")({
   ),
 });
 
+const CATEGORIES = [
+  "All",
+  "Food & Drinks",
+  "Electronics",
+  "Clothing & Fashion",
+  "Books & Stationery",
+  "Beauty & Personal Care",
+  "Services & Repairs",
+];
+
+type FeaturedVendor = {
+  id: string;
+  business_name: string;
+  category: string;
+  rating: number;
+  is_open: boolean;
+  logo_url: string | null;
+};
+
+function ProductGridSkeleton() {
+  return (
+    <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+      {Array.from({ length: 6 }).map((_, i) => (
+        <div key={i} className="rounded-xl border border-border bg-card p-4 animate-pulse">
+          <div className="mb-4 h-48 w-full rounded-lg bg-muted" />
+          <div className="mb-2 h-4 w-3/4 rounded bg-muted" />
+          <div className="mb-2 h-4 w-1/2 rounded bg-muted" />
+          <div className="mt-4 h-8 rounded bg-muted" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function Home() {
-  const [category, setCategory] = useState("All");
-  const products = category === "All" ? PRODUCTS : PRODUCTS.filter((p) => p.category === category);
+  const { profile } = useAuth();
+  const [products, setProducts] = useState<ProductWithVendor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState("All");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [vendors, setVendors] = useState<FeaturedVendor[]>([]);
+
+  useEffect(() => {
+    if (!profile?.university_id) return;
+
+    const universityId = profile.university_id;
+    let cancelled = false;
+    setLoading(true);
+
+    async function fetchProducts() {
+      let query = supabase
+        .from("student_product_feed")
+        .select("*")
+        .eq("university_id", universityId)
+        .order("is_featured", { ascending: false })
+        .order("rating", { ascending: false });
+
+      if (selectedCategory !== "All") {
+        query = query.eq("category", selectedCategory);
+      }
+
+      const { data, error } = await query;
+      if (cancelled) return;
+
+      if (error) {
+        console.error("Error fetching products:", error.message);
+      } else {
+        setProducts((data ?? []) as ProductWithVendor[]);
+      }
+      setLoading(false);
+    }
+
+    fetchProducts();
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.university_id, selectedCategory]);
+
+  useEffect(() => {
+    if (!profile?.university_id) return;
+
+    const universityId = profile.university_id;
+    let cancelled = false;
+
+    async function fetchVendors() {
+      const { data, error } = await supabase
+        .from("vendors")
+        .select("id, business_name, category, rating, is_open, logo_url")
+        .eq("university_id", universityId)
+        .eq("status", "approved")
+        .order("rating", { ascending: false })
+        .limit(6);
+
+      if (cancelled) return;
+      if (error) {
+        console.error("Error fetching vendors:", error.message);
+      } else {
+        setVendors((data ?? []) as FeaturedVendor[]);
+      }
+    }
+
+    fetchVendors();
+    return () => {
+      cancelled = true;
+    };
+  }, [profile?.university_id]);
+
+  const filteredProducts = useMemo(
+    () => products.filter((p) => p.name.toLowerCase().includes(searchQuery.toLowerCase())),
+    [products, searchQuery],
+  );
+
+  const recommendedProducts = useMemo(() => products.filter((p) => p.is_featured).slice(0, 4), [products]);
 
   return (
     <StudentLayout>
@@ -70,6 +184,16 @@ function Home() {
               </Link>
             </Button>
           </div>
+
+          <div className="relative mt-8 max-w-lg">
+            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Search products on campus..."
+              className="h-11 rounded-lg border-border bg-card pl-9"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
         </div>
       </section>
 
@@ -79,9 +203,9 @@ function Home() {
             {CATEGORIES.map((c) => (
               <button
                 key={c}
-                onClick={() => setCategory(c)}
+                onClick={() => setSelectedCategory(c)}
                 className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all duration-200 ${
-                  category === c
+                  selectedCategory === c
                     ? "bg-primary text-primary-foreground glow-primary"
                     : "border border-border bg-card text-muted-foreground hover:text-foreground"
                 }`}
@@ -95,41 +219,94 @@ function Home() {
 
       <section className="mx-auto max-w-7xl px-4 py-10">
         <h2 className="mb-5 text-xl font-bold">Fresh on your campus</h2>
-        <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-          {products.map((p) => (
-            <ProductCard key={p.id} product={p} />
-          ))}
-        </div>
+        {loading ? (
+          <ProductGridSkeleton />
+        ) : filteredProducts.length === 0 ? (
+          <EmptyState
+            title="No products found"
+            subtitle={
+              selectedCategory !== "All"
+                ? `No ${selectedCategory} products available yet`
+                : "No products available on your campus yet"
+            }
+            action={
+              selectedCategory !== "All" ? (
+                <Button className="rounded-lg glow-primary" onClick={() => setSelectedCategory("All")}>
+                  View all products
+                </Button>
+              ) : undefined
+            }
+          />
+        ) : (
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {filteredProducts.map((p) => (
+              <StudentProductCard key={p.id} product={p} />
+            ))}
+          </div>
+        )}
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-6">
-        <div className="flex flex-wrap items-center gap-3">
-          <Zap className="h-5 w-5 fill-primary text-primary" />
-          <h2 className="text-xl font-bold">Recommended For You</h2>
-          <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
-            AI Powered
-          </span>
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Personalised picks based on what students like you are ordering
-        </p>
-        <div className="mt-5 flex gap-5 overflow-x-auto pb-2 no-scrollbar md:grid md:grid-cols-3 md:overflow-visible">
-          {PRODUCTS.slice(2, 5).map((p) => (
-            <div key={p.id} className="w-64 shrink-0 md:w-auto">
-              <ProductCard product={p} />
-            </div>
-          ))}
-        </div>
-      </section>
+      {!loading && recommendedProducts.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-6">
+          <div className="flex flex-wrap items-center gap-3">
+            <Zap className="h-5 w-5 fill-primary text-primary" />
+            <h2 className="text-xl font-bold">Recommended For You</h2>
+            <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
+              AI Powered
+            </span>
+          </div>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Personalised recommendations coming soon — showing featured products for now.
+          </p>
+          <div className="mt-5 flex gap-5 overflow-x-auto pb-2 no-scrollbar md:grid md:grid-cols-4 md:overflow-visible">
+            {recommendedProducts.map((p) => (
+              <div key={p.id} className="w-64 shrink-0 md:w-auto">
+                <StudentProductCard product={p} />
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
-      <section className="mx-auto max-w-7xl px-4 py-10">
-        <h2 className="mb-5 text-xl font-bold">Featured Vendors</h2>
-        <div className="flex gap-5 overflow-x-auto pb-2 no-scrollbar">
-          {VENDORS.map((v) => (
-            <VendorCard key={v.id} vendor={v} showAction />
-          ))}
-        </div>
-      </section>
+      {vendors.length > 0 && (
+        <section className="mx-auto max-w-7xl px-4 py-10">
+          <h2 className="mb-5 text-xl font-bold">Featured Vendors</h2>
+          <div className="flex gap-5 overflow-x-auto pb-2 no-scrollbar">
+            {vendors.map((v) => (
+              <div key={v.id} className="w-64 shrink-0 overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary/40">
+                <div className="h-20 bg-gradient-to-r from-primary/30 via-primary/10 to-accent/20" />
+                <div className="-mt-7 px-4 pb-4">
+                  {v.logo_url ? (
+                    <img
+                      src={v.logo_url}
+                      alt={v.business_name}
+                      className="h-14 w-14 rounded-full border-4 border-card object-cover"
+                    />
+                  ) : (
+                    <div className="grid h-14 w-14 place-items-center rounded-full border-4 border-card bg-muted text-lg font-bold text-primary">
+                      {v.business_name.slice(0, 1).toUpperCase()}
+                    </div>
+                  )}
+                  <div className="mt-2 flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="truncate text-sm font-bold">{v.business_name}</p>
+                      <p className="text-xs text-muted-foreground">{v.category}</p>
+                    </div>
+                    <OpenBadge isOpen={v.is_open} />
+                  </div>
+                  <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <Star className="h-3.5 w-3.5 fill-accent text-accent" />
+                    <span className="font-semibold text-foreground">{Number(v.rating ?? 0).toFixed(1)}</span>
+                  </div>
+                  <Button variant="outline" size="sm" className="mt-3 w-full rounded-lg border-primary/50 text-primary">
+                    View Store
+                  </Button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       <Footer />
     </StudentLayout>

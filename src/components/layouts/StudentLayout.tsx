@@ -3,7 +3,6 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Bell, ClipboardList, Home, Search, ShoppingCart, User } from "lucide-react";
 
 import { Logo } from "@/components/Logo";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +24,6 @@ export function StudentLayout({ children }: { children: ReactNode }) {
   const { profile } = useAuth();
   const [cartCount, setCartCount] = useState(0);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [searchQuery, setSearchQuery] = useState("");
 
   const initials = profile?.full_name
     ? profile.full_name
@@ -81,7 +79,7 @@ export function StudentLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen bg-background pb-20 md:pb-0">
       <header className="sticky top-0 z-40 border-b border-border bg-background/80 backdrop-blur-lg">
-        <div className="mx-auto grid h-16 max-w-7xl grid-cols-[auto_1fr_auto] items-center gap-3 px-4">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4">
           <Link to="/" className="flex shrink-0 items-center gap-2">
             <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary font-extrabold text-primary-foreground glow-primary">
               U
@@ -89,17 +87,7 @@ export function StudentLayout({ children }: { children: ReactNode }) {
             <Logo className="hidden sm:inline" />
           </Link>
 
-          <div className="relative hidden min-w-0 md:mx-6 md:block">
-            <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-            <Input
-              placeholder="Search products on campus..."
-              className="h-10 rounded-lg border-border bg-card pl-9"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-            />
-          </div>
-
-          <div className="flex shrink-0 items-center gap-1 justify-self-end">
+          <div className="flex shrink-0 items-center gap-1">
             <Link to="/cart" className="relative">
               <Button variant="ghost" size="icon" aria-label="Cart">
                 <ShoppingCart className="h-5 w-5" />
