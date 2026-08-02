@@ -199,6 +199,18 @@ export interface Dispute {
   created_at: string
 }
 
+export interface CartItemProduct {
+  id: string
+  name: string
+  price: number
+  compare_price: number | null
+  images: string[]
+  vendor: {
+    business_name: string
+    is_open: boolean
+  } | null
+}
+
 export interface CartItem {
   id: string
   student_id: string
@@ -206,7 +218,7 @@ export interface CartItem {
   university_id: string
   quantity: number
   created_at: string
-  product?: ProductWithVendor
+  product?: CartItemProduct | null
 }
 
 export interface Rating {

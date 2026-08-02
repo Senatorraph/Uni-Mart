@@ -5,6 +5,7 @@ import { Bell, ClipboardList, Home, Search, ShoppingCart, User } from "lucide-re
 import { Logo } from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
+import { CartProvider, useCartContext } from "@/context/CartContext";
 import { supabase } from "@/integrations/supabase/client";
 
 const NAV_LINKS = [
@@ -21,8 +22,16 @@ const BOTTOM_LINKS = [
 ] as const;
 
 export function StudentLayout({ children }: { children: ReactNode }) {
+  return (
+    <CartProvider>
+      <StudentLayoutContent>{children}</StudentLayoutContent>
+    </CartProvider>
+  );
+}
+
+function StudentLayoutContent({ children }: { children: ReactNode }) {
   const { profile } = useAuth();
-  const [cartCount, setCartCount] = useState(0);
+  const { cartCount } = useCartContext();
   const [unreadCount, setUnreadCount] = useState(0);
 
   const initials = profile?.full_name
@@ -38,12 +47,6 @@ export function StudentLayout({ children }: { children: ReactNode }) {
     const studentId = profile?.id;
     if (!studentId) return;
 
-    async function fetchCartCount(id: string) {
-      const { data } = await supabase.from("cart_items").select("quantity").eq("student_id", id);
-
-      setCartCount(data ? data.reduce((sum, item) => sum + item.quantity, 0) : 0);
-    }
-
     async function fetchUnread(id: string) {
       const { count } = await supabase
         .from("notifications")
@@ -54,26 +57,7 @@ export function StudentLayout({ children }: { children: ReactNode }) {
       setUnreadCount(count ?? 0);
     }
 
-    fetchCartCount(studentId);
     fetchUnread(studentId);
-
-    const cartSub = supabase
-      .channel("cart-changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "cart_items",
-          filter: `student_id=eq.${studentId}`,
-        },
-        () => fetchCartCount(studentId),
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(cartSub);
-    };
   }, [profile?.id]);
 
   return (

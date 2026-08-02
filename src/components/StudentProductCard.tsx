@@ -5,45 +5,21 @@ import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/format";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/context/AuthContext";
+import { useCartContext } from "@/context/CartContext";
 import type { ProductWithVendor } from "@/types";
 
 export function StudentProductCard({ product }: { product: ProductWithVendor }) {
-  const { profile } = useAuth();
+  const { addToCart } = useCartContext();
   const [adding, setAdding] = useState(false);
 
   const image = product.images?.[0];
   const outOfStock = product.stock_qty <= 0;
 
   async function handleAddToCart() {
-    if (!profile || adding) return;
+    if (adding) return;
     setAdding(true);
 
-    const { data: existing, error: existingError } = await supabase
-      .from("cart_items")
-      .select("id, quantity")
-      .eq("student_id", profile.id)
-      .eq("product_id", product.id)
-      .maybeSingle();
-
-    if (existingError) {
-      toast.error("Couldn't add to cart");
-      setAdding(false);
-      return;
-    }
-
-    const { error } = existing
-      ? await supabase
-          .from("cart_items")
-          .update({ quantity: existing.quantity + 1 })
-          .eq("id", existing.id)
-      : await supabase.from("cart_items").insert({
-          student_id: profile.id,
-          product_id: product.id,
-          university_id: profile.university_id,
-          quantity: 1,
-        });
+    const { error } = await addToCart(product.id, 1);
 
     setAdding(false);
 
