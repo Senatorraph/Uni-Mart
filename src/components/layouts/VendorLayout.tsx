@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import {
   ArrowLeft,
   Bell,
@@ -12,10 +12,11 @@ import {
   X,
 } from "lucide-react";
 
-import { Logo } from "@/components/Navbar";
+import { Logo } from "@/components/Logo";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
 
 const ITEMS = [
   { to: "/vendor/dashboard", label: "Dashboard", icon: LayoutGrid },
@@ -36,7 +37,11 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <div className="flex h-full flex-col gap-2 p-4">
-      <Link to="/vendor/dashboard" onClick={onNavigate} className="mb-4 flex items-center gap-2 px-2">
+      <Link
+        to="/vendor/dashboard"
+        onClick={onNavigate}
+        className="mb-4 flex items-center gap-2 px-2"
+      >
         <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary font-extrabold text-primary-foreground glow-primary">
           U
         </div>
@@ -78,8 +83,28 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export function VendorLayout({ title, children }: { title: string; children: ReactNode }) {
+  const { profile } = useAuth();
   const [open, setOpen] = useState(false);
   const [storeOpen, setStoreOpen] = useState(true);
+
+  useEffect(() => {
+    if (!profile?.id) return;
+
+    supabase
+      .from("vendors")
+      .select("is_open")
+      .eq("user_id", profile.id)
+      .single()
+      .then(({ data }) => {
+        if (data) setStoreOpen(data.is_open);
+      });
+  }, [profile?.id]);
+
+  async function toggleStore(next: boolean) {
+    setStoreOpen(next);
+    if (!profile?.id) return;
+    await supabase.from("vendors").update({ is_open: next }).eq("user_id", profile.id);
+  }
 
   return (
     <div className="min-h-screen bg-background md:flex">
@@ -102,10 +127,8 @@ export function VendorLayout({ title, children }: { title: string; children: Rea
             <h1 className="truncate text-lg font-extrabold md:text-xl">{title}</h1>
             <div className="flex shrink-0 items-center gap-3">
               <div className="hidden items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 sm:flex">
-                <span className="text-xs font-semibold">
-                  {storeOpen ? "Open 🟢" : "Closed 🔴"}
-                </span>
-                <Switch checked={storeOpen} onCheckedChange={setStoreOpen} />
+                <span className="text-xs font-semibold">{storeOpen ? "Open 🟢" : "Closed 🔴"}</span>
+                <Switch checked={storeOpen} onCheckedChange={toggleStore} />
               </div>
               <div className="relative">
                 <Button variant="ghost" size="icon" aria-label="Notifications">

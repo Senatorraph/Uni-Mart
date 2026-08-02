@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Check, Camera, Phone } from "lucide-react";
 
-import { Navbar } from "@/components/Navbar";
-import { BottomNav } from "@/components/BottomNav";
+import { StudentLayout } from "@/components/layouts/StudentLayout";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/format";
 import { ORDERS } from "@/lib/mock-data";
@@ -12,7 +11,11 @@ export const Route = createFileRoute("/orders/$id")({
   head: () => ({
     meta: [
       { title: "Track your order — UniMarket" },
-      { name: "description", content: "Follow your campus delivery step by step, from vendor confirmation to rider drop-off." },
+      {
+        name: "description",
+        content:
+          "Follow your campus delivery step by step, from vendor confirmation to rider drop-off.",
+      },
       { property: "og:title", content: "Track your order — UniMarket" },
       { property: "og:description", content: "Follow your campus delivery step by step." },
     ],
@@ -37,9 +40,7 @@ function OrderTracking() {
   const order = ORDERS.find((o) => o.id === id) ?? ORDERS[0];
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
-      <Navbar />
-
+    <StudentLayout>
       <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
         <div>
           <h1 className="text-2xl font-extrabold">Order {order.id}</h1>
@@ -49,7 +50,10 @@ function OrderTracking() {
         <div className="rounded-xl border border-border bg-card p-6">
           <ol className="flex flex-col gap-6 md:flex-row md:items-start md:gap-0">
             {STEPS.map((s, i) => (
-              <li key={s.label} className="flex items-start gap-3 md:flex-1 md:flex-col md:items-center md:text-center">
+              <li
+                key={s.label}
+                className="flex items-start gap-3 md:flex-1 md:flex-col md:items-center md:text-center"
+              >
                 <div className="flex items-center gap-0 md:w-full md:justify-center">
                   <span
                     className={`grid h-9 w-9 shrink-0 place-items-center rounded-full border text-xs font-bold ${
@@ -64,7 +68,9 @@ function OrderTracking() {
                   </span>
                 </div>
                 <div>
-                  <p className={`text-sm font-semibold ${s.done || s.active ? "" : "text-muted-foreground"}`}>
+                  <p
+                    className={`text-sm font-semibold ${s.done || s.active ? "" : "text-muted-foreground"}`}
+                  >
                     {s.label}
                   </p>
                   {s.active && <p className="text-xs text-primary">In progress</p>}
@@ -128,8 +134,6 @@ function OrderTracking() {
           </Button>
         )}
       </div>
-
-      <BottomNav />
-    </div>
+    </StudentLayout>
   );
 }

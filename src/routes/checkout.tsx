@@ -1,8 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Lock, MapPin } from "lucide-react";
 
-import { Navbar } from "@/components/Navbar";
-import { BottomNav } from "@/components/BottomNav";
+import { StudentLayout } from "@/components/layouts/StudentLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,9 +14,15 @@ export const Route = createFileRoute("/checkout")({
   head: () => ({
     meta: [
       { title: "Checkout — UniMarket" },
-      { name: "description", content: "Confirm your hostel delivery details and pay securely for your campus order." },
+      {
+        name: "description",
+        content: "Confirm your hostel delivery details and pay securely for your campus order.",
+      },
       { property: "og:title", content: "Checkout — UniMarket" },
-      { property: "og:description", content: "Confirm delivery details and pay securely on UniMarket." },
+      {
+        property: "og:description",
+        content: "Confirm delivery details and pay securely on UniMarket.",
+      },
     ],
   }),
   component: () => (
@@ -34,9 +39,7 @@ function Checkout() {
   const total = subtotal + 500;
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
-      <Navbar />
-
+    <StudentLayout>
       <div className="mx-auto max-w-6xl px-4 py-8">
         <ol className="mb-8 flex flex-wrap items-center gap-3 text-xs">
           {STEPS.map((s, i) => (
@@ -133,7 +136,9 @@ function Checkout() {
               </div>
             </dl>
             <Button asChild className="mt-5 h-11 w-full rounded-lg font-bold glow-primary">
-              <Link to="/orders/$id" params={{ id: "UM-10432" }}>Pay {formatNaira(total)}</Link>
+              <Link to="/orders/$id" params={{ id: "UM-10432" }}>
+                Pay {formatNaira(total)}
+              </Link>
             </Button>
             <p className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
               <Lock className="h-3.5 w-3.5" /> Paystack · Your payment is secured
@@ -141,8 +146,6 @@ function Checkout() {
           </aside>
         </div>
       </div>
-
-      <BottomNav />
-    </div>
+    </StudentLayout>
   );
 }

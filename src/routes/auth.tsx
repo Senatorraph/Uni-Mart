@@ -1,4 +1,4 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { GraduationCap, Loader2, Store } from "lucide-react";
 
@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Logo } from "@/components/Navbar";
+import { AuthLayout } from "@/components/layouts/AuthLayout";
 import { BUSINESS_CATEGORIES } from "@/lib/mock-data";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
@@ -20,7 +20,11 @@ export const Route = createFileRoute("/auth")({
   head: () => ({
     meta: [
       { title: "Sign in or create an account — UniMarket" },
-      { name: "description", content: "Join UniMarket as a student or campus vendor and start buying and selling on your campus." },
+      {
+        name: "description",
+        content:
+          "Join UniMarket as a student or campus vendor and start buying and selling on your campus.",
+      },
       { property: "og:title", content: "Sign in or create an account — UniMarket" },
       { property: "og:description", content: "Join UniMarket as a student or campus vendor." },
     ],
@@ -77,7 +81,11 @@ function GoogleBlock() {
         or continue with
         <span className="h-px flex-1 bg-border" />
       </div>
-      <Button variant="outline" className="h-11 w-full gap-3 rounded-lg border-border" type="button">
+      <Button
+        variant="outline"
+        className="h-11 w-full gap-3 rounded-lg border-border"
+        type="button"
+      >
         <span className="grid h-5 w-5 place-items-center rounded-full bg-foreground text-[11px] font-black text-background">
           G
         </span>
@@ -123,7 +131,9 @@ function AuthPage() {
 
   const [activeTab, setActiveTab] = useState<"signin" | "signup">("signin");
   const [role, setRole] = useState<"student" | "vendor" | null>(null);
-  const [universities, setUniversities] = useState<Pick<University, "id" | "name" | "short_name">[]>([]);
+  const [universities, setUniversities] = useState<
+    Pick<University, "id" | "name" | "short_name">[]
+  >([]);
 
   const [signInEmail, setSignInEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
@@ -251,183 +261,172 @@ function AuthPage() {
   }
 
   return (
-    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-4 py-12">
-      <div className="pointer-events-none absolute -left-24 -top-24 h-72 w-72 rounded-full bg-primary/25 blur-3xl" />
-      <div className="pointer-events-none absolute -bottom-32 -right-16 h-80 w-80 rounded-full bg-accent/15 blur-3xl" />
+    <AuthLayout>
+      <div className="rounded-xl border border-border bg-card p-6">
+        {error && (
+          <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+        {successMessage && (
+          <div className="mb-4 rounded-lg border border-success/30 bg-success/10 px-4 py-2.5 text-sm text-success">
+            {successMessage}
+          </div>
+        )}
 
-      <div className="relative w-full max-w-md">
-        <div className="mb-6 text-center">
-          <Link to="/" className="inline-flex items-center gap-2">
-            <span className="grid h-10 w-10 place-items-center rounded-xl bg-primary font-extrabold text-primary-foreground glow-primary">
-              U
-            </span>
-            <Logo className="text-xl" />
-          </Link>
-          <p className="mt-2 text-sm text-muted-foreground">Your campus marketplace, in one app.</p>
-        </div>
+        <Tabs
+          value={activeTab}
+          onValueChange={(v) => {
+            setActiveTab(v as "signin" | "signup");
+            setError(null);
+            setSuccessMessage(null);
+          }}
+        >
+          <TabsList className="grid w-full grid-cols-2 rounded-lg bg-muted">
+            <TabsTrigger value="signin" className="rounded-lg">
+              Sign In
+            </TabsTrigger>
+            <TabsTrigger value="signup" className="rounded-lg">
+              Sign Up
+            </TabsTrigger>
+          </TabsList>
 
-        <div className="rounded-xl border border-border bg-card p-6">
-          {error && (
-            <div className="mb-4 rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2.5 text-sm text-destructive">
-              {error}
+          <TabsContent value="signin" className="mt-6 space-y-4">
+            <form
+              className="space-y-4"
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleSignIn();
+              }}
+            >
+              <Field
+                label="Email"
+                type="email"
+                placeholder="you@student.edu.ng"
+                value={signInEmail}
+                onChange={(e) => setSignInEmail(e.target.value)}
+                required
+              />
+              <Field
+                label="Password"
+                type="password"
+                placeholder="••••••••"
+                value={signInPassword}
+                onChange={(e) => setSignInPassword(e.target.value)}
+                required
+              />
+              <button type="button" className="text-xs font-medium text-primary hover:underline">
+                Forgot password?
+              </button>
+              <Button
+                type="submit"
+                disabled={loading}
+                className="h-11 w-full rounded-lg text-sm font-bold glow-primary"
+              >
+                {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                Sign In
+              </Button>
+            </form>
+            <GoogleBlock />
+          </TabsContent>
+
+          <TabsContent value="signup" className="mt-6">
+            <p className="mb-3 text-xs font-medium text-muted-foreground">I want to join as</p>
+            <div className="flex gap-3">
+              <RoleCard
+                icon={GraduationCap}
+                title="I'm a Student"
+                subtitle="Browse and order from campus vendors"
+                selected={role === "student"}
+                onSelect={() => setRole("student")}
+              />
+              <RoleCard
+                icon={Store}
+                title="I'm a Vendor"
+                subtitle="Sell your products to students on campus"
+                selected={role === "vendor"}
+                onSelect={() => setRole("vendor")}
+              />
             </div>
-          )}
-          {successMessage && (
-            <div className="mb-4 rounded-lg border border-success/30 bg-success/10 px-4 py-2.5 text-sm text-success">
-              {successMessage}
-            </div>
-          )}
 
-          <Tabs
-            value={activeTab}
-            onValueChange={(v) => {
-              setActiveTab(v as "signin" | "signup");
-              setError(null);
-              setSuccessMessage(null);
-            }}
-          >
-            <TabsList className="grid w-full grid-cols-2 rounded-lg bg-muted">
-              <TabsTrigger value="signin" className="rounded-lg">Sign In</TabsTrigger>
-              <TabsTrigger value="signup" className="rounded-lg">Sign Up</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="signin" className="mt-6 space-y-4">
+            {role && (
               <form
-                className="space-y-4"
+                className="mt-6 space-y-4"
                 onSubmit={(e) => {
                   e.preventDefault();
-                  handleSignIn();
+                  handleSignUp();
                 }}
               >
+                <Field
+                  label="Full Name"
+                  placeholder="Chidi Okafor"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  required
+                />
                 <Field
                   label="Email"
                   type="email"
                   placeholder="you@student.edu.ng"
-                  value={signInEmail}
-                  onChange={(e) => setSignInEmail(e.target.value)}
+                  value={signUpEmail}
+                  onChange={(e) => setSignUpEmail(e.target.value)}
+                  required
+                />
+                <Field
+                  label="Phone Number"
+                  placeholder="0801 234 5678"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
                   required
                 />
                 <Field
                   label="Password"
                   type="password"
                   placeholder="••••••••"
-                  value={signInPassword}
-                  onChange={(e) => setSignInPassword(e.target.value)}
+                  value={signUpPassword}
+                  onChange={(e) => setSignUpPassword(e.target.value)}
                   required
+                  minLength={6}
                 />
-                <button type="button" className="text-xs font-medium text-primary hover:underline">
-                  Forgot password?
-                </button>
+                <SelectField
+                  label="University"
+                  value={universityId}
+                  onChange={setUniversityId}
+                  options={universities.map((u) => ({ value: u.id, label: u.name }))}
+                />
+
+                {role === "vendor" && (
+                  <>
+                    <Field
+                      label="Business Name"
+                      placeholder="Mama Tee's Kitchen"
+                      value={businessName}
+                      onChange={(e) => setBusinessName(e.target.value)}
+                      required
+                    />
+                    <SelectField
+                      label="Business Category"
+                      value={businessCategory}
+                      onChange={setBusinessCategory}
+                      options={BUSINESS_CATEGORIES.map((c) => ({ value: c, label: c }))}
+                    />
+                  </>
+                )}
+
                 <Button
                   type="submit"
                   disabled={loading}
                   className="h-11 w-full rounded-lg text-sm font-bold glow-primary"
                 >
                   {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                  Sign In
+                  {role === "vendor" ? "Submit Application" : "Create Account"}
                 </Button>
+                <GoogleBlock />
               </form>
-              <GoogleBlock />
-            </TabsContent>
-
-            <TabsContent value="signup" className="mt-6">
-              <p className="mb-3 text-xs font-medium text-muted-foreground">I want to join as</p>
-              <div className="flex gap-3">
-                <RoleCard
-                  icon={GraduationCap}
-                  title="I'm a Student"
-                  subtitle="Browse and order from campus vendors"
-                  selected={role === "student"}
-                  onSelect={() => setRole("student")}
-                />
-                <RoleCard
-                  icon={Store}
-                  title="I'm a Vendor"
-                  subtitle="Sell your products to students on campus"
-                  selected={role === "vendor"}
-                  onSelect={() => setRole("vendor")}
-                />
-              </div>
-
-              {role && (
-                <form
-                  className="mt-6 space-y-4"
-                  onSubmit={(e) => {
-                    e.preventDefault();
-                    handleSignUp();
-                  }}
-                >
-                  <Field
-                    label="Full Name"
-                    placeholder="Chidi Okafor"
-                    value={fullName}
-                    onChange={(e) => setFullName(e.target.value)}
-                    required
-                  />
-                  <Field
-                    label="Email"
-                    type="email"
-                    placeholder="you@student.edu.ng"
-                    value={signUpEmail}
-                    onChange={(e) => setSignUpEmail(e.target.value)}
-                    required
-                  />
-                  <Field
-                    label="Phone Number"
-                    placeholder="0801 234 5678"
-                    value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
-                    required
-                  />
-                  <Field
-                    label="Password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={signUpPassword}
-                    onChange={(e) => setSignUpPassword(e.target.value)}
-                    required
-                    minLength={6}
-                  />
-                  <SelectField
-                    label="University"
-                    value={universityId}
-                    onChange={setUniversityId}
-                    options={universities.map((u) => ({ value: u.id, label: u.name }))}
-                  />
-
-                  {role === "vendor" && (
-                    <>
-                      <Field
-                        label="Business Name"
-                        placeholder="Mama Tee's Kitchen"
-                        value={businessName}
-                        onChange={(e) => setBusinessName(e.target.value)}
-                        required
-                      />
-                      <SelectField
-                        label="Business Category"
-                        value={businessCategory}
-                        onChange={setBusinessCategory}
-                        options={BUSINESS_CATEGORIES.map((c) => ({ value: c, label: c }))}
-                      />
-                    </>
-                  )}
-
-                  <Button
-                    type="submit"
-                    disabled={loading}
-                    className="h-11 w-full rounded-lg text-sm font-bold glow-primary"
-                  >
-                    {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    {role === "vendor" ? "Submit Application" : "Create Account"}
-                  </Button>
-                  <GoogleBlock />
-                </form>
-              )}
-            </TabsContent>
-          </Tabs>
-        </div>
+            )}
+          </TabsContent>
+        </Tabs>
       </div>
-    </div>
+    </AuthLayout>
   );
 }

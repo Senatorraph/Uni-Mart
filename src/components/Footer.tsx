@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { Facebook, Instagram, Twitter } from "lucide-react";
-import { Logo } from "@/components/Navbar";
+import { Logo } from "@/components/Logo";
 
 export function Footer() {
   return (

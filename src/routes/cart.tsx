@@ -2,8 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Lock, Minus, Plus, ShoppingCart, Trash2 } from "lucide-react";
 
-import { Navbar } from "@/components/Navbar";
-import { BottomNav } from "@/components/BottomNav";
+import { StudentLayout } from "@/components/layouts/StudentLayout";
 import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/format";
@@ -14,7 +13,11 @@ export const Route = createFileRoute("/cart")({
   head: () => ({
     meta: [
       { title: "Your cart — UniMarket" },
-      { name: "description", content: "Review your campus orders, adjust quantities and check out securely with Paystack." },
+      {
+        name: "description",
+        content:
+          "Review your campus orders, adjust quantities and check out securely with Paystack.",
+      },
       { property: "og:title", content: "Your cart — UniMarket" },
       { property: "og:description", content: "Review your campus orders and check out securely." },
     ],
@@ -39,9 +42,7 @@ function CartPage() {
     );
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
-      <Navbar cartCount={items.length} />
-
+    <StudentLayout>
       <div className="mx-auto max-w-6xl px-4 py-8">
         <h1 className="mb-6 text-2xl font-extrabold">Your Cart</h1>
 
@@ -83,11 +84,17 @@ function CartPage() {
                       </button>
                     </div>
                     <div className="mt-3 flex w-fit items-center rounded-lg border border-border">
-                      <button className="p-2 transition-colors hover:bg-muted" onClick={() => setQty(item.id, -1)}>
+                      <button
+                        className="p-2 transition-colors hover:bg-muted"
+                        onClick={() => setQty(item.id, -1)}
+                      >
                         <Minus className="h-3.5 w-3.5" />
                       </button>
                       <span className="w-10 text-center text-sm font-bold">{item.qty}</span>
-                      <button className="p-2 transition-colors hover:bg-muted" onClick={() => setQty(item.id, 1)}>
+                      <button
+                        className="p-2 transition-colors hover:bg-muted"
+                        onClick={() => setQty(item.id, 1)}
+                      >
                         <Plus className="h-3.5 w-3.5" />
                       </button>
                     </div>
@@ -136,8 +143,6 @@ function CartPage() {
           </div>
         )}
       </div>
-
-      <BottomNav />
-    </div>
+    </StudentLayout>
   );
 }

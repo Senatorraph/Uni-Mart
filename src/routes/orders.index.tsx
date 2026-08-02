@@ -2,8 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ClipboardList } from "lucide-react";
 
-import { Navbar } from "@/components/Navbar";
-import { BottomNav } from "@/components/BottomNav";
+import { StudentLayout } from "@/components/layouts/StudentLayout";
 import { EmptyState } from "@/components/EmptyState";
 import { OrderStatusBadge } from "@/components/OrderStatusBadge";
 import { Button } from "@/components/ui/button";
@@ -15,7 +14,11 @@ export const Route = createFileRoute("/orders/")({
   head: () => ({
     meta: [
       { title: "My Orders — UniMarket" },
-      { name: "description", content: "Track every campus order you have placed, from pending to delivered, in one place." },
+      {
+        name: "description",
+        content:
+          "Track every campus order you have placed, from pending to delivered, in one place.",
+      },
       { property: "og:title", content: "My Orders — UniMarket" },
       { property: "og:description", content: "Track every campus order you have placed." },
     ],
@@ -35,9 +38,7 @@ function OrdersPage() {
     filter === "All" ? ORDERS : ORDERS.filter((o) => o.status === filter.toLowerCase());
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
-      <Navbar />
-
+    <StudentLayout>
       <div className="mx-auto max-w-4xl px-4 py-8">
         <h1 className="text-2xl font-extrabold">My Orders</h1>
 
@@ -71,7 +72,10 @@ function OrdersPage() {
             />
           ) : (
             orders.map((o) => (
-              <div key={o.id} className="rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40">
+              <div
+                key={o.id}
+                className="rounded-xl border border-border bg-card p-4 transition-colors hover:border-primary/40"
+              >
                 <div className="grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3">
                   <span className="grid h-11 w-11 shrink-0 place-items-center rounded-full bg-muted text-xl">
                     {o.vendorEmoji}
@@ -87,8 +91,15 @@ function OrdersPage() {
                 <p className="mt-3 line-clamp-1 text-sm text-muted-foreground">{o.items}</p>
                 <div className="mt-3 flex items-center justify-between">
                   <span className="text-lg font-extrabold">{formatNaira(o.total)}</span>
-                  <Button asChild size="sm" variant="outline" className="rounded-lg border-primary/50 text-primary">
-                    <Link to="/orders/$id" params={{ id: o.id }}>Track Order</Link>
+                  <Button
+                    asChild
+                    size="sm"
+                    variant="outline"
+                    className="rounded-lg border-primary/50 text-primary"
+                  >
+                    <Link to="/orders/$id" params={{ id: o.id }}>
+                      Track Order
+                    </Link>
                   </Button>
                 </div>
               </div>
@@ -96,8 +107,6 @@ function OrdersPage() {
           )}
         </div>
       </div>
-
-      <BottomNav />
-    </div>
+    </StudentLayout>
   );
 }

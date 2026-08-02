@@ -2,8 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Zap } from "lucide-react";
 
-import { Navbar } from "@/components/Navbar";
-import { BottomNav } from "@/components/BottomNav";
+import { StudentLayout } from "@/components/layouts/StudentLayout";
 import { Footer } from "@/components/Footer";
 import { ProductCard } from "@/components/ProductCard";
 import { VendorCard } from "@/components/VendorCard";
@@ -15,9 +14,17 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "UniMarket — Your Campus. Your Market." },
-      { name: "description", content: "Shop food, gadgets, fashion and services from verified vendors on your Nigerian campus, delivered to your hostel in minutes." },
+      {
+        name: "description",
+        content:
+          "Shop food, gadgets, fashion and services from verified vendors on your Nigerian campus, delivered to your hostel in minutes.",
+      },
       { property: "og:title", content: "UniMarket — Your Campus. Your Market." },
-      { property: "og:description", content: "Shop food, gadgets, fashion and services from verified vendors on your Nigerian campus, delivered to your hostel in minutes." },
+      {
+        property: "og:description",
+        content:
+          "Shop food, gadgets, fashion and services from verified vendors on your Nigerian campus, delivered to your hostel in minutes.",
+      },
     ],
   }),
   component: () => (
@@ -29,13 +36,10 @@ export const Route = createFileRoute("/")({
 
 function Home() {
   const [category, setCategory] = useState("All");
-  const products =
-    category === "All" ? PRODUCTS : PRODUCTS.filter((p) => p.category === category);
+  const products = category === "All" ? PRODUCTS : PRODUCTS.filter((p) => p.category === category);
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
-      <Navbar />
-
+    <StudentLayout>
       <section className="relative overflow-hidden border-b border-border">
         <div className="pointer-events-none absolute -left-20 top-0 h-72 w-72 rounded-full bg-primary/25 blur-3xl" />
         <div className="pointer-events-none absolute -right-10 bottom-0 h-64 w-64 rounded-full bg-accent/15 blur-3xl" />
@@ -55,8 +59,15 @@ function Home() {
             <Button size="lg" className="rounded-lg font-bold glow-primary">
               Start Shopping
             </Button>
-            <Button asChild size="lg" variant="outline" className="rounded-lg border-primary/50 font-bold text-primary">
-              <Link to="/auth" search={{ next: "" }}>Become a Vendor</Link>
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="rounded-lg border-primary/50 font-bold text-primary"
+            >
+              <Link to="/auth" search={{ next: "" }}>
+                Become a Vendor
+              </Link>
             </Button>
           </div>
         </div>
@@ -121,7 +132,6 @@ function Home() {
       </section>
 
       <Footer />
-      <BottomNav />
-    </div>
+    </StudentLayout>
   );
 }

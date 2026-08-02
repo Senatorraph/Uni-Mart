@@ -9,8 +9,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 
-import { Navbar } from "@/components/Navbar";
-import { BottomNav } from "@/components/BottomNav";
+import { StudentLayout } from "@/components/layouts/StudentLayout";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/format";
 import { StudentRoute } from "@/components/ProtectedRoute";
@@ -20,9 +19,16 @@ export const Route = createFileRoute("/profile")({
   head: () => ({
     meta: [
       { title: "My Profile — UniMarket" },
-      { name: "description", content: "View your UniMarket campus profile, order stats, notifications and account settings." },
+      {
+        name: "description",
+        content:
+          "View your UniMarket campus profile, order stats, notifications and account settings.",
+      },
       { property: "og:title", content: "My Profile — UniMarket" },
-      { property: "og:description", content: "Your campus profile, order stats and account settings." },
+      {
+        property: "og:description",
+        content: "Your campus profile, order stats and account settings.",
+      },
     ],
   }),
   component: () => (
@@ -49,9 +55,7 @@ function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background pb-24 md:pb-0">
-      <Navbar />
-
+    <StudentLayout>
       <div className="mx-auto max-w-3xl space-y-6 px-4 py-8">
         <section className="rounded-2xl border border-border bg-card p-6">
           <div className="flex min-w-0 flex-col items-center gap-4 text-center sm:flex-row sm:text-left">
@@ -122,8 +126,6 @@ function ProfilePage() {
           </button>
         </section>
       </div>
-
-      <BottomNav />
-    </div>
+    </StudentLayout>
   );
 }

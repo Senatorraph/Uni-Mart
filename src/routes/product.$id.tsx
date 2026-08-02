@@ -2,8 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { Minus, Plus, Star, Bike } from "lucide-react";
 
-import { Navbar } from "@/components/Navbar";
-import { BottomNav } from "@/components/BottomNav";
+import { StudentLayout } from "@/components/layouts/StudentLayout";
 import { Footer } from "@/components/Footer";
 import { OpenBadge } from "@/components/VendorCard";
 import { EmptyState } from "@/components/EmptyState";
@@ -16,9 +15,16 @@ export const Route = createFileRoute("/product/$id")({
   head: () => ({
     meta: [
       { title: "Product details — UniMarket" },
-      { name: "description", content: "See prices, vendor ratings and reviews before you order from a verified campus vendor." },
+      {
+        name: "description",
+        content:
+          "See prices, vendor ratings and reviews before you order from a verified campus vendor.",
+      },
       { property: "og:title", content: "Product details — UniMarket" },
-      { property: "og:description", content: "See prices, vendor ratings and reviews on UniMarket." },
+      {
+        property: "og:description",
+        content: "See prices, vendor ratings and reviews on UniMarket.",
+      },
     ],
   }),
   component: () => (
@@ -36,21 +42,18 @@ function ProductDetail() {
 
   if (!product) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
+      <StudentLayout>
         <div className="mx-auto max-w-3xl px-4 py-10">
           <EmptyState title="Product not found" subtitle="This product may have been removed." />
         </div>
-      </div>
+      </StudentLayout>
     );
   }
 
   const breakdown = [78, 14, 5, 2, 1];
 
   return (
-    <div className="min-h-screen bg-background pb-20 md:pb-0">
-      <Navbar />
-
+    <StudentLayout>
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-8 md:grid-cols-2">
         <div>
           <div className="grid aspect-square place-items-center rounded-xl border border-border bg-gradient-to-br from-primary/20 via-card to-background text-8xl">
@@ -100,11 +103,17 @@ function ProductDetail() {
 
           <div className="flex items-center gap-4">
             <div className="flex items-center rounded-lg border border-border bg-card">
-              <button className="p-2.5 transition-colors hover:bg-muted" onClick={() => setQty((q) => Math.max(1, q - 1))}>
+              <button
+                className="p-2.5 transition-colors hover:bg-muted"
+                onClick={() => setQty((q) => Math.max(1, q - 1))}
+              >
                 <Minus className="h-4 w-4" />
               </button>
               <span className="w-12 text-center text-sm font-bold">{qty}</span>
-              <button className="p-2.5 transition-colors hover:bg-muted" onClick={() => setQty((q) => q + 1)}>
+              <button
+                className="p-2.5 transition-colors hover:bg-muted"
+                onClick={() => setQty((q) => q + 1)}
+              >
                 <Plus className="h-4 w-4" />
               </button>
             </div>
@@ -112,7 +121,11 @@ function ProductDetail() {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Button asChild variant="outline" className="h-11 flex-1 rounded-lg border-primary/60 font-bold text-primary">
+            <Button
+              asChild
+              variant="outline"
+              className="h-11 flex-1 rounded-lg border-primary/60 font-bold text-primary"
+            >
               <Link to="/cart">Add to Cart</Link>
             </Button>
             <Button asChild className="h-11 flex-1 rounded-lg font-bold glow-primary">
@@ -199,7 +212,6 @@ function ProductDetail() {
       </div>
 
       <Footer />
-      <BottomNav />
-    </div>
+    </StudentLayout>
   );
 }
