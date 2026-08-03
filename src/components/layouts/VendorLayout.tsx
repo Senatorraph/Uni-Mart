@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useEffect, useState, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 import {
   ArrowLeft,
   Bell,
@@ -16,7 +16,7 @@ import { Logo } from "@/components/Logo";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/context/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { useVendor } from "@/hooks/useVendor";
 
 const ITEMS = [
   { to: "/vendor/dashboard", label: "Dashboard", icon: LayoutGrid },
@@ -83,28 +83,8 @@ function SidebarBody({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 export function VendorLayout({ title, children }: { title: string; children: ReactNode }) {
-  const { profile } = useAuth();
   const [open, setOpen] = useState(false);
-  const [storeOpen, setStoreOpen] = useState(true);
-
-  useEffect(() => {
-    if (!profile?.id) return;
-
-    supabase
-      .from("vendors")
-      .select("is_open")
-      .eq("user_id", profile.id)
-      .single()
-      .then(({ data }) => {
-        if (data) setStoreOpen(data.is_open);
-      });
-  }, [profile?.id]);
-
-  async function toggleStore(next: boolean) {
-    setStoreOpen(next);
-    if (!profile?.id) return;
-    await supabase.from("vendors").update({ is_open: next }).eq("user_id", profile.id);
-  }
+  const { vendor, toggleStoreOpen } = useVendor();
 
   return (
     <div className="min-h-screen bg-background md:flex">
@@ -127,8 +107,8 @@ export function VendorLayout({ title, children }: { title: string; children: Rea
             <h1 className="truncate text-lg font-extrabold md:text-xl">{title}</h1>
             <div className="flex shrink-0 items-center gap-3">
               <div className="hidden items-center gap-2 rounded-xl border border-border bg-card px-3 py-1.5 sm:flex">
-                <span className="text-xs font-semibold">{storeOpen ? "Open 🟢" : "Closed 🔴"}</span>
-                <Switch checked={storeOpen} onCheckedChange={toggleStore} />
+                <span className="text-xs font-semibold">{vendor?.is_open ? "Open 🟢" : "Closed 🔴"}</span>
+                <Switch checked={vendor?.is_open ?? false} onCheckedChange={toggleStoreOpen} />
               </div>
               <div className="relative">
                 <Button variant="ghost" size="icon" aria-label="Notifications">
