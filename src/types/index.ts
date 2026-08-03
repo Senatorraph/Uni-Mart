@@ -140,6 +140,11 @@ export interface OrderItem {
   quantity: number
   unit_price: number
   subtotal: number
+  product?: {
+    name: string
+    images: string[]
+    price: number
+  } | null
 }
 
 export interface OrderWithDetails extends Order {
