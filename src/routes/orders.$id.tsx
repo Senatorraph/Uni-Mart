@@ -1,16 +1,18 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Camera, Check, Phone } from "lucide-react";
+import { Camera, Check, Loader2, Phone } from "lucide-react";
 
 import { StudentLayout } from "@/components/layouts/StudentLayout";
 import { EmptyState } from "@/components/EmptyState";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { OrderStatusBadge } from "@/components/OrderStatusBadge";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { formatNaira } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/context/AuthContext";
 import { StudentRoute } from "@/components/ProtectedRoute";
-import type { Delivery, Order, OrderItem, OrderStatus, Payment } from "@/types";
+import type { Delivery, Dispute, Order, OrderItem, OrderStatus, Payment } from "@/types";
 
 // Canonical happy-path ordering, used as a fallback when a step's own timestamp
 // hasn't been set yet (e.g. a status was updated without also stamping the
@@ -130,6 +132,14 @@ const TERMINAL_BANNERS: Record<string, { label: string; className: string }> = {
   },
 };
 
+const DISPUTE_STATUS_STYLES: Record<string, { label: string; className: string }> = {
+  open: { label: "Under Review", className: "bg-accent/15 text-accent" },
+  under_review: { label: "Under Review", className: "bg-accent/15 text-accent" },
+  resolved_refund: { label: "Refund Approved", className: "bg-success/15 text-success" },
+  resolved_release: { label: "Resolved — No Refund", className: "bg-muted text-muted-foreground" },
+  closed: { label: "Closed", className: "bg-muted text-muted-foreground" },
+};
+
 function OrderTracking() {
   return (
     <StudentLayout>
@@ -141,6 +151,7 @@ function OrderTracking() {
 function OrderTrackingContent() {
   const { id } = Route.useParams();
   const navigate = useNavigate();
+  const { profile } = useAuth();
 
   const [order, setOrder] = useState<Order | null>(null);
   const [orderItems, setOrderItems] = useState<OrderItem[]>([]);
@@ -151,6 +162,14 @@ function OrderTrackingContent() {
   const [vendorWhatsapp, setVendorWhatsapp] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showDisputeForm, setShowDisputeForm] = useState(false);
+  const [disputeReason, setDisputeReason] = useState("");
+  const [submittingDispute, setSubmittingDispute] = useState(false);
+  const [disputeSuccess, setDisputeSuccess] = useState(false);
+  const [existingDispute, setExistingDispute] = useState<Dispute | null>(null);
+  // Bumped after submitting a dispute to force an immediate refetch, on top of
+  // (not instead of) the realtime subscription below — see the cart INSERT
+  // backstop pattern for why: it's a harmless, faster-than-waiting belt-and-suspenders.
+  const [refetchTrigger, setRefetchTrigger] = useState(0);
 
   useEffect(() => {
     if (!id) return;
@@ -220,7 +239,64 @@ function OrderTrackingContent() {
       cancelled = true;
       supabase.removeChannel(sub);
     };
-  }, [id]);
+  }, [id, refetchTrigger]);
+
+  useEffect(() => {
+    if (!id) return;
+
+    let cancelled = false;
+
+    async function checkDispute() {
+      const { data } = await supabase.from("disputes").select("*").eq("order_id", id).maybeSingle();
+      if (!cancelled && data) setExistingDispute(data as Dispute);
+    }
+
+    checkDispute();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, refetchTrigger]);
+
+  async function submitDispute() {
+    if (!disputeReason.trim()) return;
+    if (!profile?.id || !profile?.university_id || !order) return;
+
+    setSubmittingDispute(true);
+
+    try {
+      const { data: dispute, error: disputeError } = await supabase
+        .from("disputes")
+        .insert({
+          order_id: order.id,
+          raised_by: profile.id,
+          university_id: profile.university_id,
+          reason: disputeReason.trim(),
+          evidence_urls: [],
+          status: "open",
+        })
+        .select("*")
+        .single();
+
+      if (disputeError) throw disputeError;
+
+      const { error: orderError } = await supabase
+        .from("orders")
+        .update({ status: "disputed" })
+        .eq("id", order.id);
+
+      if (orderError) throw orderError;
+
+      if (dispute) setExistingDispute(dispute as Dispute);
+      setRefetchTrigger((t) => t + 1);
+      setDisputeSuccess(true);
+      setShowDisputeForm(false);
+      setDisputeReason("");
+    } catch (err) {
+      console.error("Failed to submit dispute:", err instanceof Error ? err.message : err);
+    } finally {
+      setSubmittingDispute(false);
+    }
+  }
 
   if (loading) {
     return (
@@ -382,19 +458,93 @@ function OrderTrackingContent() {
         </div>
       </div>
 
-      {["delivered", "completed"].includes(order.status) && (
-        <div className="space-y-3">
-          <Button
-            variant="outline"
-            className="w-full rounded-lg border-destructive/60 text-destructive"
-            onClick={() => setShowDisputeForm((v) => !v)}
-          >
-            Raise a Dispute
-          </Button>
-          {showDisputeForm && (
-            <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4 text-sm text-destructive">
-              Dispute filing is coming in a future update. For now, please reach out to{" "}
-              {vendorName || "the vendor"} directly to resolve any issues with this order.
+      {existingDispute && (
+        <div className="rounded-xl border border-destructive/30 bg-destructive/10 p-4">
+          <h4 className="mb-1 font-semibold text-destructive">Dispute Filed</h4>
+          <p className="text-sm text-muted-foreground">{existingDispute.reason}</p>
+          <div className="mt-2 flex flex-wrap items-center gap-2">
+            {(() => {
+              const style = DISPUTE_STATUS_STYLES[existingDispute.status] ?? {
+                label: existingDispute.status,
+                className: "bg-muted text-muted-foreground",
+              };
+              return (
+                <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${style.className}`}>
+                  {style.label}
+                </span>
+              );
+            })()}
+            {existingDispute.classifier_recommendation && (
+              <span className="text-xs text-muted-foreground">
+                AI recommendation: {existingDispute.classifier_recommendation}
+              </span>
+            )}
+          </div>
+          {existingDispute.resolution_note && (
+            <p className="mt-2 border-t border-destructive/20 pt-2 text-sm text-muted-foreground">
+              Admin note: {existingDispute.resolution_note}
+            </p>
+          )}
+        </div>
+      )}
+
+      {disputeSuccess && (
+        <div className="rounded-xl border border-success/30 bg-success/10 p-4">
+          <p className="flex items-center gap-1.5 text-sm font-medium text-success">
+            <Check className="h-4 w-4" /> Dispute submitted successfully
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Our team will review your case and respond within 24 hours. Payment is held until the
+            dispute is resolved.
+          </p>
+        </div>
+      )}
+
+      {["delivered", "completed"].includes(order.status) && !existingDispute && (
+        <div>
+          {!showDisputeForm ? (
+            <Button
+              variant="outline"
+              className="w-full rounded-lg border-destructive/60 text-destructive"
+              onClick={() => setShowDisputeForm(true)}
+            >
+              Raise a Dispute
+            </Button>
+          ) : (
+            <div className="space-y-3 rounded-xl border border-destructive/30 bg-card p-4">
+              <h4 className="font-semibold">Raise a Dispute</h4>
+              <p className="text-xs text-muted-foreground">
+                Describe what went wrong with your order. Our team will review your case within 24
+                hours.
+              </p>
+              <Textarea
+                value={disputeReason}
+                onChange={(e) => setDisputeReason(e.target.value)}
+                placeholder="e.g. The item I received was different from what was shown. I ordered a blue shirt but received a red one."
+                rows={4}
+                className="rounded-lg border-border bg-background"
+              />
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1 rounded-lg"
+                  onClick={() => {
+                    setShowDisputeForm(false);
+                    setDisputeReason("");
+                  }}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  variant="destructive"
+                  className="flex-1 gap-2 rounded-lg"
+                  disabled={!disputeReason.trim() || submittingDispute}
+                  onClick={submitDispute}
+                >
+                  {submittingDispute && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {submittingDispute ? "Submitting..." : "Submit Dispute"}
+                </Button>
+              </div>
             </div>
           )}
         </div>
