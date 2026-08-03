@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { Bell } from "lucide-react";
 
 import { Logo } from "@/components/Logo";
@@ -12,10 +12,23 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/context/AuthContext";
 
-const TABS = ["Available Jobs", "Active Delivery", "Completed"] as const;
+export type RiderTab = "available" | "active" | "completed";
 
-export function RiderLayout({ children }: { children: ReactNode }) {
-  const [tab, setTab] = useState<string>(TABS[0]);
+const TABS: { key: RiderTab; label: string }[] = [
+  { key: "available", label: "Available Jobs" },
+  { key: "active", label: "Active Delivery" },
+  { key: "completed", label: "Completed" },
+];
+
+export function RiderLayout({
+  activeTab,
+  onTabChange,
+  children,
+}: {
+  activeTab: RiderTab;
+  onTabChange: (tab: RiderTab) => void;
+  children: ReactNode;
+}) {
   const { signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -70,15 +83,15 @@ export function RiderLayout({ children }: { children: ReactNode }) {
         <div className="mx-auto flex max-w-5xl gap-2 overflow-x-auto px-4 pb-3 no-scrollbar">
           {TABS.map((t) => (
             <button
-              key={t}
-              onClick={() => setTab(t)}
+              key={t.key}
+              onClick={() => onTabChange(t.key)}
               className={`whitespace-nowrap rounded-full px-4 py-2 text-sm font-medium transition-all ${
-                tab === t
+                activeTab === t.key
                   ? "bg-primary text-primary-foreground glow-primary"
                   : "border border-border bg-card text-muted-foreground hover:text-foreground"
               }`}
             >
-              {t}
+              {t.label}
             </button>
           ))}
         </div>
