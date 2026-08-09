@@ -91,7 +91,7 @@ export function useRider() {
   async function acceptJob(deliveryId: string) {
     if (!profile?.id) return { error: 'Not logged in' }
 
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from('deliveries')
       .update({
         rider_id: profile.id,
@@ -99,15 +99,24 @@ export function useRider() {
         assigned_at: new Date().toISOString(),
       })
       .eq('id', deliveryId)
-      .is('rider_id', null) // prevent race condition
+      .is('rider_id', null) // only succeeds if not already taken
+      .select('id')
+      .single()
 
-    if (error) return { error: error.message }
+    if (error || !data) {
+      // .single() errors when the filtered update matches zero rows,
+      // i.e. another rider already claimed this job first.
+      return { error: error?.message || 'Job already taken' }
+    }
 
     // Update order status
     const delivery = availableJobs.find((j) => j.id === deliveryId)
     if (delivery?.order?.id) {
       await supabase.from('orders').update({ status: 'rider_assigned' }).eq('id', delivery.order.id)
     }
+
+    // Remove from available jobs immediately; fetchAll() will reconcile shortly after.
+    setAvailableJobs((prev) => prev.filter((j) => j.id !== deliveryId))
 
     await fetchAll()
     return { error: null }

@@ -97,7 +97,7 @@ function VendorOrders() {
         .order("created_at", { ascending: false });
 
       if (activeFilter === "pending") {
-        query = query.eq("status", "paid");
+        query = query.in("status", ["pending", "paid"]);
       } else if (activeFilter === "confirmed") {
         query = query.in("status", ["confirmed", "rider_assigned", "picked_up"]);
       } else if (activeFilter === "delivered") {
@@ -123,7 +123,7 @@ function VendorOrders() {
       .channel(`vendor-all-orders-${vendorId}`)
       .on(
         "postgres_changes",
-        { event: "*", schema: "public", table: "orders", filter: `vendor_id=eq.${vendorId}` },
+        { event: "INSERT", schema: "public", table: "orders", filter: `vendor_id=eq.${vendorId}` },
         () => fetchOrders(),
       )
       .subscribe();
@@ -137,14 +137,23 @@ function VendorOrders() {
   async function confirmOrder(orderId: string) {
     setConfirmingId(orderId);
 
+    const confirmedAt = new Date().toISOString();
     const { error } = await supabase
       .from("orders")
-      .update({ status: "confirmed", confirmed_at: new Date().toISOString() })
+      .update({ status: "confirmed", confirmed_at: confirmedAt })
       .eq("id", orderId);
 
     if (error) {
       console.error("Failed to confirm order:", error.message);
+      setConfirmingId(null);
+      return;
     }
+
+    setOrders((prev) =>
+      prev.map((o) =>
+        o.id === orderId ? { ...o, status: "confirmed", confirmed_at: confirmedAt } : o,
+      ),
+    );
 
     setConfirmingId(null);
   }

@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { Camera, CheckCircle, Loader2, MapPin, Package, Phone } from "lucide-react";
+import { toast } from "sonner";
 
 import { RiderLayout, type RiderTab } from "@/components/layouts/RiderLayout";
 import { EmptyState } from "@/components/EmptyState";
@@ -40,6 +41,7 @@ function RiderDashboard() {
     loading,
     acceptJob,
     updateDeliveryStatus,
+    refetch,
   } = useRider();
 
   const [activeTab, setActiveTab] = useState<RiderTab>("available");
@@ -78,11 +80,20 @@ function RiderDashboard() {
   }
 
   async function handleAcceptJob(deliveryId: string) {
+    if (acceptingId) return; // guard against double-tapping while a request is in flight
     setAcceptingId(deliveryId);
+
     const { error } = await acceptJob(deliveryId);
-    if (error) console.error("Failed to accept job:", error);
+
+    if (error) {
+      console.error("Failed to accept job:", error);
+      toast.error("This job was just taken by another rider");
+      await refetch();
+    } else {
+      setActiveTab("active");
+    }
+
     setAcceptingId(null);
-    setActiveTab("active");
   }
 
   async function handleAtVendor() {
