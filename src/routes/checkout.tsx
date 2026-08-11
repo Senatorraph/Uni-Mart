@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { formatNaira } from "@/lib/format";
+import { scoreFraud } from "@/lib/ml";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { useCartContext } from "@/context/CartContext";
@@ -90,7 +91,7 @@ function CheckoutContent() {
     {} as Record<string, CartItem[]>,
   );
 
-  async function createOrders() {
+  async function createOrders(fraudScore?: number, fraudFlag?: boolean) {
     if (!profile?.id || !profile?.university_id) {
       console.error("No profile or university_id", { profile });
       return null;
@@ -107,7 +108,10 @@ function CheckoutContent() {
 
     try {
       for (const [vendorId, items] of Object.entries(itemsByVendor)) {
-        const vendorSubtotal = items.reduce((sum, item) => sum + (item.product?.price || 0) * item.quantity, 0);
+        const vendorSubtotal = items.reduce(
+          (sum, item) => sum + (item.product?.price || 0) * item.quantity,
+          0,
+        );
         const vendorAmount = vendorSubtotal - vendorSubtotal * PLATFORM_FEE_RATE;
 
         const { data: order, error: orderError } = await supabase
@@ -123,6 +127,8 @@ function CheckoutContent() {
             total_amount: vendorSubtotal + DELIVERY_FEE,
             delivery_address: deliveryAddress.trim(),
             delivery_note: deliveryNote.trim() || null,
+            fraud_score: fraudScore ?? null,
+            fraud_flag: fraudFlag ?? false,
           })
           .select("id")
           .single();
@@ -199,11 +205,41 @@ function CheckoutContent() {
   }
 
   async function handleCheckout() {
-    const orderIds = await createOrders();
+    setLoading(true);
+    setError(null);
+
+    const accountCreatedAt = profile?.created_at ? new Date(profile.created_at) : new Date();
+    const accountAgeDays = Math.floor(
+      (Date.now() - accountCreatedAt.getTime()) / (1000 * 60 * 60 * 24),
+    );
+
+    const fraudResult = await scoreFraud({
+      order_value: total,
+      time_of_day: new Date().getHours(),
+      orders_last_hour: 1,
+      account_age_days: accountAgeDays,
+      cart_item_count: cartItems.length,
+      university_id: profile?.university_id || "",
+    });
+
+    console.log("Fraud score:", fraudResult);
+
+    if (fraudResult.action === "block") {
+      setError("Your order has been flagged for security review. Please contact support.");
+      setLoading(false);
+      return;
+    }
+
+    if (fraudResult.action === "review") {
+      console.warn("Order flagged for review — proceeding with flag");
+    }
+
+    const orderIds = await createOrders(fraudResult.score, fraudResult.flag);
     if (!orderIds || orderIds.length === 0) return;
 
     const paystackKey = import.meta.env.VITE_PAYSTACK_PUBLIC_KEY;
-    const isPlaceholderKey = !paystackKey || paystackKey === "pk_test_placeholder" || paystackKey.includes("xxxx");
+    const isPlaceholderKey =
+      !paystackKey || paystackKey === "pk_test_placeholder" || paystackKey.includes("xxxx");
 
     if (isPlaceholderKey) {
       // No real Paystack key configured yet — simulate a successful payment.
@@ -317,7 +353,9 @@ function CheckoutContent() {
         </section>
 
         <aside className="h-fit rounded-xl border border-border bg-card p-5 lg:sticky lg:top-24">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Payment Summary</h2>
+          <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
+            Payment Summary
+          </h2>
           <ul className="mt-4 space-y-3">
             {cartItems.map((item) => {
               const image = item.product?.images?.[0];
@@ -325,15 +363,22 @@ function CheckoutContent() {
                 <li key={item.id} className="flex items-center gap-3 text-sm">
                   <div className="grid h-9 w-9 shrink-0 place-items-center overflow-hidden rounded-lg bg-muted">
                     {image ? (
-                      <img src={image} alt={item.product?.name} className="h-full w-full object-cover" />
+                      <img
+                        src={image}
+                        alt={item.product?.name}
+                        className="h-full w-full object-cover"
+                      />
                     ) : (
                       <span aria-hidden>🛍️</span>
                     )}
                   </div>
                   <span className="min-w-0 flex-1 truncate">
-                    {item.product?.name} <span className="text-muted-foreground">×{item.quantity}</span>
+                    {item.product?.name}{" "}
+                    <span className="text-muted-foreground">×{item.quantity}</span>
                   </span>
-                  <span className="font-semibold">{formatNaira((item.product?.price || 0) * item.quantity)}</span>
+                  <span className="font-semibold">
+                    {formatNaira((item.product?.price || 0) * item.quantity)}
+                  </span>
                 </li>
               );
             })}

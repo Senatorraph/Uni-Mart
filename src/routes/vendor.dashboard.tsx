@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { LoadingSpinner } from "@/components/LoadingSpinner";
 import { Button } from "@/components/ui/button";
 import { formatNaira } from "@/lib/format";
+import { getDemandForecast } from "@/lib/ml";
 import { supabase } from "@/integrations/supabase/client";
 import { useVendor } from "@/hooks/useVendor";
 import { VendorRoute } from "@/components/ProtectedRoute";
@@ -16,9 +17,15 @@ export const Route = createFileRoute("/vendor/dashboard")({
   head: () => ({
     meta: [
       { title: "Vendor Dashboard — UniMarket" },
-      { name: "description", content: "Track campus orders, revenue and AI demand forecasts for your UniMarket store." },
+      {
+        name: "description",
+        content: "Track campus orders, revenue and AI demand forecasts for your UniMarket store.",
+      },
       { property: "og:title", content: "Vendor Dashboard — UniMarket" },
-      { property: "og:description", content: "Track orders, revenue and demand forecasts for your store." },
+      {
+        property: "og:description",
+        content: "Track orders, revenue and demand forecasts for your store.",
+      },
     ],
   }),
   component: () => (
@@ -49,7 +56,8 @@ function StatCard({
   value: string;
   tone?: "accent" | "success";
 }) {
-  const color = tone === "accent" ? "text-accent" : tone === "success" ? "text-success" : "text-primary";
+  const color =
+    tone === "accent" ? "text-accent" : tone === "success" ? "text-success" : "text-primary";
   return (
     <div className="rounded-xl border border-border bg-card p-5">
       <div className="flex items-center justify-between">
@@ -76,6 +84,9 @@ function VendorDashboard() {
   });
   const [recentOrders, setRecentOrders] = useState<DashboardOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [forecast, setForecast] = useState<
+    Array<{ date: string; predicted_orders: number; lower_bound: number; upper_bound: number }>
+  >([]);
 
   useEffect(() => {
     if (!vendor?.id) return;
@@ -145,6 +156,23 @@ function VendorDashboard() {
     };
   }, [vendor?.id]);
 
+  useEffect(() => {
+    if (!vendor?.id) return;
+
+    const vendorId = vendor.id;
+    let cancelled = false;
+
+    async function fetchForecast() {
+      const data = await getDemandForecast(vendorId, 7);
+      if (!cancelled) setForecast(data);
+    }
+
+    fetchForecast();
+    return () => {
+      cancelled = true;
+    };
+  }, [vendor?.id]);
+
   if (vendorLoading) {
     return (
       <VendorLayout title="Vendor Dashboard">
@@ -168,7 +196,14 @@ function VendorDashboard() {
     );
   }
 
-  const forecastMax = Math.max(...FORECAST_VALUES);
+  const forecastData =
+    forecast.length > 0
+      ? forecast.map((d) => ({
+          label: new Date(d.date).toLocaleDateString("en-NG", { weekday: "short" }),
+          value: d.predicted_orders,
+        }))
+      : FORECAST_DAYS.map((label, i) => ({ label, value: FORECAST_VALUES[i] }));
+  const forecastMax = Math.max(...forecastData.map((d) => d.value));
 
   return (
     <VendorLayout title="Vendor Dashboard">
@@ -179,22 +214,35 @@ function VendorDashboard() {
           <div className="rounded-xl border border-accent/30 bg-accent/10 p-4">
             <p className="text-sm font-medium text-accent">⏳ Store Pending Approval</p>
             <p className="mt-1 text-xs text-muted-foreground">
-              Your store is under review by the university admin. You will be notified once
-              approved and your products become visible to students.
+              Your store is under review by the university admin. You will be notified once approved
+              and your products become visible to students.
             </p>
           </div>
         )}
 
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard icon={Package} label="Total Orders" value={stats.totalOrders.toLocaleString()} />
+          <StatCard
+            icon={Package}
+            label="Total Orders"
+            value={stats.totalOrders.toLocaleString()}
+          />
           <StatCard
             icon={Clock}
             label="Pending Orders"
             value={stats.pendingOrders.toLocaleString()}
             tone="accent"
           />
-          <StatCard icon={Wallet} label="Total Revenue" value={formatNaira(stats.totalRevenue)} tone="success" />
-          <StatCard icon={Boxes} label="Total Products" value={stats.totalProducts.toLocaleString()} />
+          <StatCard
+            icon={Wallet}
+            label="Total Revenue"
+            value={formatNaira(stats.totalRevenue)}
+            tone="success"
+          />
+          <StatCard
+            icon={Boxes}
+            label="Total Products"
+            value={stats.totalProducts.toLocaleString()}
+          />
         </div>
 
         <div className="flex flex-wrap gap-3">
@@ -216,17 +264,22 @@ function VendorDashboard() {
           {loading ? (
             <LoadingSpinner label="Loading orders..." />
           ) : recentOrders.length === 0 ? (
-            <EmptyState title="No orders yet" subtitle="New orders will appear here in real time." />
+            <EmptyState
+              title="No orders yet"
+              subtitle="New orders will appear here in real time."
+            />
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full min-w-[720px] text-sm">
                 <thead className="bg-muted/40 text-xs uppercase tracking-wide text-muted-foreground">
                   <tr>
-                    {["Order ID", "Student", "Items", "Total", "Status", "Time", "Action"].map((h) => (
-                      <th key={h} className="px-5 py-3 text-left font-medium">
-                        {h}
-                      </th>
-                    ))}
+                    {["Order ID", "Student", "Items", "Total", "Status", "Time", "Action"].map(
+                      (h) => (
+                        <th key={h} className="px-5 py-3 text-left font-medium">
+                          {h}
+                        </th>
+                      ),
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -236,10 +289,14 @@ function VendorDashboard() {
                       className="cursor-pointer border-t border-border transition-colors hover:bg-muted/20"
                       onClick={() => navigate({ to: "/vendor/orders" })}
                     >
-                      <td className="px-5 py-3 font-semibold">#{order.id.slice(0, 8).toUpperCase()}</td>
+                      <td className="px-5 py-3 font-semibold">
+                        #{order.id.slice(0, 8).toUpperCase()}
+                      </td>
                       <td className="px-5 py-3">{order.student?.full_name || "Unknown"}</td>
                       <td className="max-w-[220px] truncate px-5 py-3 text-muted-foreground">
-                        {order.items?.map((item) => `${item.product?.name} ×${item.quantity}`).join(", ")}
+                        {order.items
+                          ?.map((item) => `${item.product?.name} ×${item.quantity}`)
+                          .join(", ")}
                       </td>
                       <td className="px-5 py-3 font-semibold">{formatNaira(order.total_amount)}</td>
                       <td className="px-5 py-3">
@@ -277,25 +334,34 @@ function VendorDashboard() {
             <Zap className="h-5 w-5 fill-primary text-primary" />
             <h2 className="text-sm font-bold">AI Demand Forecast</h2>
             <span className="rounded-full bg-accent/15 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-accent">
-              Coming Soon
+              {forecast.length > 0 ? "Live" : "Coming Soon"}
             </span>
           </div>
           <p className="mt-1 text-xs text-muted-foreground">
-            Predicted orders for {vendor.business_name} over the next 7 days. AI forecasting
-            activates once your ML microservice is deployed.
+            {forecast.length > 0
+              ? `Predicted orders for ${vendor.business_name} over the next 7 days.`
+              : `Predicted orders for ${vendor.business_name} over the next 7 days. AI forecasting activates once your ML microservice is deployed.`}
           </p>
           <div className="mt-5 flex h-40 items-end gap-3">
-            {FORECAST_VALUES.map((v, i) => (
-              <div key={FORECAST_DAYS[i]} className="flex flex-1 flex-col items-center gap-2">
+            {forecastData.map((d, i) => (
+              <div
+                key={`${d.label}-${i}`}
+                className="flex h-full flex-1 flex-col items-center justify-end gap-2"
+              >
+                <span className="text-[11px] font-semibold text-primary">{d.value}</span>
                 <div
-                  className="w-full rounded-t-lg bg-gradient-to-t from-primary/40 to-primary transition-all"
-                  style={{ height: `${(v / forecastMax) * 100}%` }}
+                  className="w-full rounded-t-lg bg-gradient-to-t from-primary/40 to-primary transition-all duration-500"
+                  style={{
+                    height: `${forecastMax > 0 ? Math.max(8, (d.value / forecastMax) * 100) : 20}%`,
+                  }}
                 />
-                <span className="text-[11px] text-muted-foreground">{FORECAST_DAYS[i]}</span>
+                <span className="text-[11px] text-muted-foreground">{d.label}</span>
               </div>
             ))}
           </div>
-          <p className="mt-3 text-center text-[11px] font-semibold text-accent">Powered by UniMarket AI</p>
+          <p className="mt-3 text-center text-[11px] font-semibold text-accent">
+            Powered by UniMarket AI
+          </p>
         </div>
       </div>
     </VendorLayout>

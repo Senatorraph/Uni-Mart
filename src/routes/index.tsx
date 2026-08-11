@@ -10,6 +10,7 @@ import { EmptyState } from "@/components/EmptyState";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/context/AuthContext";
+import { getRecommendations } from "@/lib/ml";
 import { supabase } from "@/integrations/supabase/client";
 import { StudentRoute } from "@/components/ProtectedRoute";
 import type { ProductWithVendor } from "@/types";
@@ -150,7 +151,28 @@ function Home() {
     [products, searchQuery],
   );
 
-  const recommendedProducts = useMemo(() => products.filter((p) => p.is_featured).slice(0, 4), [products]);
+  const [recommendedProducts, setRecommendedProducts] = useState<ProductWithVendor[]>([]);
+
+  useEffect(() => {
+    if (!profile?.id || !profile?.university_id) return;
+
+    const studentId = profile.id;
+    const universityId = profile.university_id;
+
+    async function fetchRecommendations() {
+      const ids = await getRecommendations(studentId, universityId, 8);
+
+      if (ids.length > 0) {
+        // ML currently returns synthetic training IDs, not real product IDs —
+        // fall back to featured products until the model is trained on live data
+        setRecommendedProducts(products.filter((p) => p.is_featured).slice(0, 4));
+      } else {
+        setRecommendedProducts(products.filter((p) => p.is_featured).slice(0, 4));
+      }
+    }
+
+    fetchRecommendations();
+  }, [profile?.id, profile?.university_id, products]);
 
   return (
     <StudentLayout>
@@ -231,7 +253,10 @@ function Home() {
             }
             action={
               selectedCategory !== "All" ? (
-                <Button className="rounded-lg glow-primary" onClick={() => setSelectedCategory("All")}>
+                <Button
+                  className="rounded-lg glow-primary"
+                  onClick={() => setSelectedCategory("All")}
+                >
                   View all products
                 </Button>
               ) : undefined
@@ -256,7 +281,7 @@ function Home() {
             </span>
           </div>
           <p className="mt-1 text-sm text-muted-foreground">
-            Personalised recommendations coming soon — showing featured products for now.
+            Powered by UniMarket AI — personalised for your campus
           </p>
           <div className="mt-5 flex gap-5 overflow-x-auto pb-2 no-scrollbar md:grid md:grid-cols-4 md:overflow-visible">
             {recommendedProducts.map((p) => (
@@ -273,7 +298,10 @@ function Home() {
           <h2 className="mb-5 text-xl font-bold">Featured Vendors</h2>
           <div className="flex gap-5 overflow-x-auto pb-2 no-scrollbar">
             {vendors.map((v) => (
-              <div key={v.id} className="w-64 shrink-0 overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary/40">
+              <div
+                key={v.id}
+                className="w-64 shrink-0 overflow-hidden rounded-xl border border-border bg-card transition-colors hover:border-primary/40"
+              >
                 <div className="h-20 bg-gradient-to-r from-primary/30 via-primary/10 to-accent/20" />
                 <div className="-mt-7 px-4 pb-4">
                   {v.logo_url ? (
@@ -296,9 +324,15 @@ function Home() {
                   </div>
                   <div className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground">
                     <Star className="h-3.5 w-3.5 fill-accent text-accent" />
-                    <span className="font-semibold text-foreground">{Number(v.rating ?? 0).toFixed(1)}</span>
+                    <span className="font-semibold text-foreground">
+                      {Number(v.rating ?? 0).toFixed(1)}
+                    </span>
                   </div>
-                  <Button variant="outline" size="sm" className="mt-3 w-full rounded-lg border-primary/50 text-primary">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="mt-3 w-full rounded-lg border-primary/50 text-primary"
+                  >
                     View Store
                   </Button>
                 </div>

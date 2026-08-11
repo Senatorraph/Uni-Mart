@@ -9,6 +9,7 @@ import { OrderStatusBadge } from "@/components/OrderStatusBadge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { formatNaira } from "@/lib/format";
+import { scoreDispute } from "@/lib/ml";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/context/AuthContext";
 import { StudentRoute } from "@/components/ProtectedRoute";
@@ -100,7 +101,8 @@ const STEP_DEFS: StepDef[] = [
     label: "Delivered",
     description: "Your order has been delivered",
     minStatus: "delivered",
-    isComplete: ({ order, delivery }) => Boolean(order.delivered_at) || delivery?.status === "delivered",
+    isComplete: ({ order, delivery }) =>
+      Boolean(order.delivered_at) || delivery?.status === "delivered",
   },
 ];
 
@@ -264,6 +266,36 @@ function OrderTrackingContent() {
     setSubmittingDispute(true);
 
     try {
+      const { data: vendorData } = await supabase
+        .from("vendors")
+        .select("rating")
+        .eq("id", order.vendor_id)
+        .single();
+
+      const { count: disputeCount } = await supabase
+        .from("disputes")
+        .select("id", { count: "exact", head: true })
+        .eq("order_id", order.id);
+
+      const accountAgeDays = profile.created_at
+        ? Math.floor((Date.now() - new Date(profile.created_at).getTime()) / (1000 * 60 * 60 * 24))
+        : 0;
+
+      const hoursDelivered = order.delivered_at
+        ? (Date.now() - new Date(order.delivered_at).getTime()) / (1000 * 60 * 60)
+        : 1;
+
+      const mlScore = await scoreDispute({
+        vendor_disputes_30d: disputeCount || 0,
+        vendor_rating: vendorData?.rating || 3.0,
+        photo_uploaded: !!delivery?.pickup_photo_url,
+        order_value: order.total_amount,
+        account_age_days: accountAgeDays,
+        time_since_delivery_hours: hoursDelivered,
+      });
+
+      console.log("Dispute ML score:", mlScore);
+
       const { data: dispute, error: disputeError } = await supabase
         .from("disputes")
         .insert({
@@ -273,6 +305,8 @@ function OrderTrackingContent() {
           reason: disputeReason.trim(),
           evidence_urls: [],
           status: "open",
+          classifier_score: mlScore.score,
+          classifier_recommendation: mlScore.recommendation,
         })
         .select("*")
         .single();
@@ -357,7 +391,9 @@ function OrderTrackingContent() {
               <div className="flex flex-col items-center">
                 <div
                   className={`grid h-8 w-8 shrink-0 place-items-center rounded-full text-sm font-bold ${
-                    isComplete ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                    isComplete
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-muted text-muted-foreground"
                   }`}
                 >
                   {isComplete ? <Check className="h-4 w-4" /> : index + 1}
@@ -405,7 +441,11 @@ function OrderTrackingContent() {
               <div key={item.id} className="flex items-center gap-3">
                 <div className="grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-lg bg-muted">
                   {image ? (
-                    <img src={image} alt={item.product?.name} className="h-full w-full object-cover" />
+                    <img
+                      src={image}
+                      alt={item.product?.name}
+                      className="h-full w-full object-cover"
+                    />
                   ) : (
                     <span aria-hidden>🛍️</span>
                   )}
@@ -427,7 +467,9 @@ function OrderTrackingContent() {
 
       <div className="grid gap-4 md:grid-cols-2">
         <div className="rounded-xl border border-border bg-card p-5">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Delivery Details</h2>
+          <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
+            Delivery Details
+          </h2>
           <p className="mt-3 text-sm">{order.delivery_address}</p>
           {order.delivery_note && (
             <p className="mt-1 text-xs text-muted-foreground">Note: {order.delivery_note}</p>
@@ -435,17 +477,27 @@ function OrderTrackingContent() {
           <p className="mt-1 text-xs text-muted-foreground">Estimated arrival: 30-45 mins</p>
         </div>
         <div className="rounded-xl border border-border bg-card p-5">
-          <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">Vendor</h2>
+          <h2 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
+            Vendor
+          </h2>
           <div className="mt-3 flex items-center gap-3">
             <div className="grid h-10 w-10 shrink-0 place-items-center overflow-hidden rounded-full bg-muted">
               {vendorLogo ? (
                 <img src={vendorLogo} alt={vendorName} className="h-full w-full object-cover" />
               ) : (
-                <span className="text-sm font-bold text-primary">{vendorName.slice(0, 1).toUpperCase()}</span>
+                <span className="text-sm font-bold text-primary">
+                  {vendorName.slice(0, 1).toUpperCase()}
+                </span>
               )}
             </div>
             <p className="min-w-0 flex-1 truncate text-sm font-semibold">{vendorName}</p>
-            <Button size="sm" variant="outline" className="rounded-lg" disabled={!whatsappHref} asChild={Boolean(whatsappHref)}>
+            <Button
+              size="sm"
+              variant="outline"
+              className="rounded-lg"
+              disabled={!whatsappHref}
+              asChild={Boolean(whatsappHref)}
+            >
               {whatsappHref ? (
                 <a href={whatsappHref} target="_blank" rel="noopener noreferrer">
                   <Phone className="h-4 w-4" />
