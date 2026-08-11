@@ -1,0 +1,24 @@
+# Environment variables
+.env
+.env.local
+
+# Virtual environment
+venv/
+env/
+
+# Saved models (large files)
+saved_models/*.pkl
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# Jupyter notebooks
+.ipynb_checkpoints
+
+# OS files
+.DS_Store
+Thumbs.db
